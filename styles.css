@@ -42,26 +42,27 @@ body, html {
         }
 
         .small-button {
-            width: 20px;
-            height: 10px;
+            width: 40%;
+            height: 80%;
             padding: 0;
             border: 1px solid #999;
             background-color: #ddd;
             cursor: pointer;
             box-sizing: border-box;
+            position: relative;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .scrambler-label {
-            font-size: 8px;
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            height: 60px;
-            display: flex;
+            font-size: 11px;
             align-items: center;
-            justify-content: center;
+            text-orientation: upright;
+            writing-mode: vertical-rl;
+            display: flex;
             white-space: nowrap;
-            overflow: hidden;
+            overflow: auto;
             text-overflow: ellipsis;
         }
 
@@ -75,7 +76,7 @@ body, html {
             transform: rotate(180deg);
             grid-row: span 3;
             display: flex;
-            align-items: center;
+            align-items: end;
             justify-content: center;
             height: 60px;
             white-space: nowrap;

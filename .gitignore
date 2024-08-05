@@ -1,6 +1,5 @@
 /*.pclprof
 /*.lprof
-/profile_output.txt
-/profile_output_*.txt
+/profile_output*.txt
 /.venv/
 /.idea

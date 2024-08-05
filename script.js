@@ -39,9 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     for (let i = 0; i < 32; i++) {
         const label = document.createElement('div');
         label.className = 'scrambler-label';
-        label.textContent = `SCRAMBLER ${i + 1}`;
-        label.style.gridRow = 4;
-        label.style.gridColumn = i + 2;
+        label.textContent = 'SCRAMBLER'.split("").sort(() => 0.5 - Math.random()).join("") + ' ' + String(i + 1).padStart(2, '0');
+        label.style.gridRow = String(4);
+        label.style.gridColumn = String(i + 2);
         bombeSimulator.appendChild(label);
     }
 

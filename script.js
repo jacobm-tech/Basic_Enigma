@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const bombeSimulator = document.getElementById('bombe-simulator');
+    const plugboardTable = document.querySelector('#plugboard table');
 
     // Add labels
     const labels = ['PLAINTEXT', '', 'STECKERED', '', 'WHEEL POS', 'STECKERED', '', 'CIPHERTEXT'];
@@ -64,12 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (index < allInputs.length - 1) {
                     allInputs[index + 1].focus();
                 }
+                updateAdjacentButtons(this);
             } else if (e.key === 'Backspace' && this.value === '') {
                 e.preventDefault();
                 if (index > 0) {
                     allInputs[index - 1].focus();
                 }
             }
+        });
+
+        input.addEventListener('input', function() {
+            updateAdjacentButtons(this);
         });
     });
 
@@ -92,6 +98,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Add event listeners for small buttons
+    const smallButtons = document.querySelectorAll('.small-button');
+    smallButtons.forEach((button, index) => {
+        button.addEventListener('click', function() {
+            if (this.classList.contains('active')) {
+                const aboveInput = allInputs[index];
+                const belowInput = allInputs[index + 32];
+                updatePlugboard(aboveInput.value, belowInput.value);
+            }
+        });
+    });
+
+    function updateAdjacentButtons(input) {
+        const index = Array.from(allInputs).indexOf(input);
+        const isTopRow = index < 32;
+        const buttonIndex = isTopRow ? index : index - 32;
+        const button = smallButtons[buttonIndex];
+        const otherInput = isTopRow ? allInputs[index + 32] : allInputs[index - 32];
+
+        if (input.value && otherInput.value) {
+            button.classList.add('active');
+            button.style.backgroundColor = 'green';
+        } else {
+            button.classList.remove('active');
+            button.style.backgroundColor = '#ddd';
+        }
+    }
+
+    function updatePlugboard(letter1, letter2) {
+        const emptyRow = Array.from(plugboardTable.rows).find(row => !row.cells[1].textContent);
+        if (emptyRow) {
+            emptyRow.cells[1].textContent = letter1;
+            emptyRow.cells[2].textContent = letter2;
+            highlightPlugboardRow(emptyRow);
+        } else {
+            alert('Plugboard Full');
+        }
+    }
+
+    function highlightPlugboardRow(row) {
+        // Remove highlight from all rows
+        Array.from(plugboardTable.rows).forEach(r => r.style.backgroundColor = '');
+        // Highlight the updated row
+        row.style.backgroundColor = 'yellow';
+    }
 
     function updateWheelPositions() {
         const initialSetting = Array.from(initialSettingInputs).map(input => input.value).join('');

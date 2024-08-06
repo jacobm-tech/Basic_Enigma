@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (index > 0) {
                     allInputs[index - 1].focus();
                 }
+                updateAdjacentButtons(this);
             }
         });
 
@@ -104,8 +105,9 @@ document.addEventListener('DOMContentLoaded', function() {
     smallButtons.forEach((button, index) => {
         button.addEventListener('click', function() {
             if (this.classList.contains('active')) {
-                const aboveInput = allInputs[index];
-                const belowInput = allInputs[index + 32];
+                const isTopRow = index < 32;
+                const aboveInput = isTopRow ? allInputs[index] : allInputs[index + 128];
+                const belowInput = isTopRow ? allInputs[index + 32] : allInputs[index + 160];
                 updatePlugboard(aboveInput.value, belowInput.value);
             }
         });
@@ -113,10 +115,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateAdjacentButtons(input) {
         const index = Array.from(allInputs).indexOf(input);
-        const isTopRow = index < 32;
-        const buttonIndex = isTopRow ? index : index - 32;
+        let buttonIndex, otherInput;
+
+        if (index < 32) {
+            // Top row of inputs
+            buttonIndex = index;
+            otherInput = allInputs[index + 32];
+        } else if (index >= 32 && index < 64) {
+            // Second row of inputs
+            buttonIndex = index - 32;
+            otherInput = allInputs[index - 32];
+        } else if (index >= 160 && index < 192) {
+            // Third row of inputs
+            buttonIndex = index - 160 + 32;
+            otherInput = allInputs[index + 32];
+        } else if (index >= 192) {
+            // Bottom row of inputs
+            buttonIndex = index - 192 + 32;
+            otherInput = allInputs[index - 32];
+        }
+
         const button = smallButtons[buttonIndex];
-        const otherInput = isTopRow ? allInputs[index + 32] : allInputs[index - 32];
 
         if (input.value && otherInput.value) {
             button.classList.add('active');
@@ -128,6 +147,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updatePlugboard(letter1, letter2) {
+        if (letter1 === letter2) {
+            return; // Do nothing if both letters are the same
+        }
+
+        const existingPair = findExistingPair(letter1, letter2);
+        if (existingPair) {
+            if ((existingPair[0] === letter1 && existingPair[1] === letter2) ||
+                (existingPair[0] === letter2 && existingPair[1] === letter1)) {
+                return; // Do nothing if the pair already exists
+            } else {
+                alert('Inconsistent Plugboard Setting');
+                return;
+            }
+        }
+
         const emptyRow = Array.from(plugboardTable.rows).find(row => !row.cells[1].textContent);
         if (emptyRow) {
             emptyRow.cells[1].textContent = letter1;
@@ -136,6 +170,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             alert('Plugboard Full');
         }
+    }
+
+    function findExistingPair(letter1, letter2) {
+        for (let row of plugboardTable.rows) {
+            const l1 = row.cells[1].textContent;
+            const l2 = row.cells[2].textContent;
+            if (l1 === letter1 || l1 === letter2 || l2 === letter1 || l2 === letter2) {
+                return [l1, l2];
+            }
+        }
+        return null;
     }
 
     function highlightPlugboardRow(row) {

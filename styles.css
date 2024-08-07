@@ -176,25 +176,59 @@ body, html {
     text-overflow: ellipsis; /* Add ellipsis for overflowing text */
 }
 
+#plugboard {
+    background-color: white;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    font-size: 12px; /* Reduced font size for compactness */
+}
+
+.plugboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px; /* Reduced margin for compactness */
+}
+
+.plugboard-header h3 {
+    margin: 0;
+    font-size: 14px; /* Slightly larger than the rest of the plugboard text */
+}
+
+#reset-plugboard {
+    padding: 3px 8px; /* Reduced padding for compactness */
+    font-size: 11px; /* Reduced font size for compactness */
+    cursor: pointer;
+}
+
+#plugboard-status {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+    height: 20px; /* Fixed height to prevent layout shifts */
+    line-height: 20px; /* Vertically center the text */
+}
+
 #plugboard table {
     border-collapse: collapse;
     width: 100%;
+    font-size: 11px; /* Reduced font size for compactness */
 }
 
 #plugboard td {
     border: 1px solid #ddd;
-    padding: 2px; /* Reduced from 5px */
+    padding: 1px; /* Reduced padding for compactness */
     text-align: center;
 }
 
 #plugboard tr td:first-child {
     background-color: #f0f0f0;
     font-weight: bold;
-    width: 20px; /* Reduced from 30px */
+    width: 15px; /* Reduced width for compactness */
 }
 
 #plugboard tr td:not(:first-child) {
-    width: 20px; /* Set to same width as letter inputs */
+    width: 15px; /* Reduced width for compactness */
 }
 
 #plugboard tr.highlighted {

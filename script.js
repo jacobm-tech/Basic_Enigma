@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const middleRotorSelect = document.getElementById('middle-rotor');
     const slowRotorSelect = document.getElementById('slow-rotor');
     const advanceRotorsButton = document.getElementById('advance-rotors');
+    const plugboardStatus = document.getElementById('plugboard-status');
+
+    const fastInitialSetting = document.getElementById('fast-rotor-initial');
+    const midInitialSetting = document.getElementById('mid-rotor-initial');
+    const slowInitialSetting = document.getElementById('slow-rotor-initial');
+
 
     // Add labels
     const labels = ['PLAINTEXT', '', 'STECKERED', '', 'FAST', 'MIDDLE', 'SLOW', 'STECKERED', '', 'CIPHERTEXT'];
@@ -28,6 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (elementType === 'input') {
                 element.type = 'text';
                 element.maxLength = 1;
+
+                if (className.includes('wheel-pos')) {
+                    element.readOnly = true;
+                }
             }
             element.style.gridRow = rowIndex + 1;
             element.style.gridColumn = i + 2; // +2 because the first column is for labels
@@ -74,12 +84,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners for input functionality
     const allInputs = document.querySelectorAll('.letter-input');
     allInputs.forEach((input, index) => {
-        input.addEventListener('keydown', function(e) {
+        if (input.className.includes('wheel-pos')) {
+            return;
+        }
+        input.addEventListener('keydown', function (e) {
             if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
                 e.preventDefault();
                 this.value = e.key.toUpperCase();
                 if (index < allInputs.length - 1) {
                     allInputs[index + 1].focus();
+                }
+                if (this.className.includes('steckered')){
+                    handleSteckeredInput(this, e.key.toUpperCase());
                 }
                 saveState();
                 updateAdjacentButtons(this);
@@ -175,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 (existingPair[0] === letter2 && existingPair[1] === letter1)) {
                 return; // Do nothing if the pair already exists
             } else {
-                alert('Inconsistent Plugboard Setting');
+                setPlugboardStatus('INCONSISTENT', 'red');
                 return;
             }
         }
@@ -186,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
             emptyRow.cells[2].textContent = letter2;
             highlightPlugboardRow(emptyRow);
         } else {
-            alert('Plugboard Full');
+            setPlugboardStatus('FULL', 'red');
         }
     }
 
@@ -209,7 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateWheelPositions() {
-        const initialSetting = Array.from(initialSettingInputs).map(input => input.value).join('');
+        let fastSetting = fastInitialSetting.value;
+        let midSetting = midInitialSetting.value;
+        let slowSetting = slowInitialSetting.value;
+        let initialSetting = fastSetting + midSetting + slowSetting;
+
         if (initialSetting.length === 3) {
             const wheelPosInputs = document.querySelectorAll('.wheel-pos');
             for (let i = 0; i < 32; i++) {
@@ -238,12 +258,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to advance rotors
     function advanceRotors() {
-        const initialSettingInputs = document.querySelectorAll('.initial-setting');
-        let setting = Array.from(initialSettingInputs).map(input => input.value).join('');
-        setting = incrementSetting(setting, 1);
-        for (let i = 0; i < 3; i++) {
-            initialSettingInputs[i].value = setting[i];
-        }
+        let fastSetting = fastInitialSetting.value;
+        let midSetting = midInitialSetting.value;
+        let slowSetting = slowInitialSetting.value;
+        let initialSetting = fastSetting + midSetting + slowSetting;
+
+        let setting = incrementSetting(initialSetting, 1);
+        slowInitialSetting.value = setting[2];
+        midInitialSetting.value = setting[1];
+        fastInitialSetting.value = setting[0];
+
         saveState();
         updateWheelPositions();
     }
@@ -252,7 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
     advanceRotorsButton.addEventListener('click', advanceRotors);
 
     function saveState() {
-        console.log('Saving state...'); // Debug log
         const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join(',');
         const steckered1 = Array.from(document.querySelectorAll('.steckered')).slice(0, 32).map(input => input.value).join(',');
         const wheelPos = Array.from(document.querySelectorAll('.wheel-pos')).map(input => input.value).join(',');
@@ -269,7 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         localStorage.setItem('bombeState', JSON.stringify(state));
-        console.log('State saved:', state); // Debug log
     }
 
     function loadState() {
@@ -318,6 +340,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'V': 'VZBRGITYUPSDNHLXAWMJQOFECK'
     };
 
+    const REFLECTOR = 'YRUHQSLDPXNGOKMIEBFZCWVJAT'
+
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     // Enigma simulation functions
@@ -332,8 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function reflector(letter) {
-        // This is a simple reflector (ETW). You might want to implement a more complex one.
-        const index = (ALPHABET.indexOf(letter) + 13) % 26;
+        const index = REFLECTOR.indexOf(letter);
         return ALPHABET[index];
     }
 
@@ -342,58 +365,125 @@ document.addEventListener('DOMContentLoaded', function() {
         let result = letter;
 
         // Forward through rotors
-        for (let i = 2; i >= 0; i--) {
-            const offset = ALPHABET.indexOf(positions[i]);
-            const shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
-            result = rotorForward(result, ROTOR_WIRINGS[rotors[i]]);
-            result = ALPHABET[shiftedAlphabet.indexOf(result)];
+        for (let i = 0; i < 3; i++) {
+            const offset = ROTOR_WIRINGS[rotors[i]].indexOf(positions[i]);
+            const shiftedRotor = ROTOR_WIRINGS[rotors[i]].slice(offset) +
+                                 ROTOR_WIRINGS[rotors[i]].slice(0,offset);
+            result = rotorForward(result, shiftedRotor);
         }
 
         // Reflector
         result = reflector(result);
 
         // Backward through rotors
-        for (let i = 0; i < 3; i++) {
-            const offset = ALPHABET.indexOf(positions[i]);
-            const shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
-            result = shiftedAlphabet[ALPHABET.indexOf(result)];
-            result = rotorReverse(result, ROTOR_WIRINGS[rotors[i]]);
+        for (let i = 2; i >= 0; i--) {
+            const offset = ROTOR_WIRINGS[rotors[i]].indexOf(positions[i]);
+            const shiftedRotor = ROTOR_WIRINGS[rotors[i]].slice(offset) +
+                                 ROTOR_WIRINGS[rotors[i]].slice(0, offset);
+            result = rotorReverse(result, shiftedRotor);
         }
 
         return result;
     }
 
-    // Update the event listeners for STECKERED inputs
+    function handleSteckeredInput(input, letter) {
+        if (letter.length === 1 && letter.match(/[A-Z]/i)) {
+            const index = Array.from(steckeredInputs).indexOf(input);
+            const columnIndex = index % 32;
+            const otherSteckeredIndex = index < 32 ? index + 32 : index - 32;
+            const wheelPosInputs = document.querySelectorAll('.wheel-pos');
+            const rotorSelects = [
+                document.getElementById('fast-rotor'),
+                document.getElementById('middle-rotor'),
+                document.getElementById('slow-rotor')
+            ];
+
+            // Get rotor settings and positions for this column
+            const rotors = rotorSelects.map(select => select.value);
+            const positions = [
+                wheelPosInputs[columnIndex].value,
+                wheelPosInputs[columnIndex + 32].value,
+                wheelPosInputs[columnIndex + 64].value
+            ];
+
+            // Perform Enigma encryption
+            let encryptedLetter = enigmaEncrypt(letter, rotors, positions);
+
+            // Update the other STECKERED input
+            steckeredInputs[otherSteckeredIndex].value = encryptedLetter;
+            let e = new Event('input');
+            steckeredInputs[otherSteckeredIndex].dispatchEvent(e);
+
+            saveState();
+        }
+    }
+
     const steckeredInputs = document.querySelectorAll('.steckered');
-    steckeredInputs.forEach((input, index) => {
-        input.addEventListener('change', function() {
-            if (this.value.length === 1 && this.value.match(/[A-Z]/i)) {
-                const letter = this.value.toUpperCase();
-                const columnIndex = index % 32;
-                const otherSteckeredIndex = index < 32 ? index + 32 : index - 32;
-                const wheelPosInputs = document.querySelectorAll('.wheel-pos');
-                const rotorSelects = [
-                    document.getElementById('fast-rotor'),
-                    document.getElementById('middle-rotor'),
-                    document.getElementById('slow-rotor')
-                ];
-
-                // Get rotor settings and positions for this column
-                const rotors = rotorSelects.map(select => select.value);
-                const positions = [
-                    wheelPosInputs[columnIndex].value,
-                    wheelPosInputs[columnIndex + 32].value,
-                    wheelPosInputs[columnIndex + 64].value
-                ];
-
-                // Perform Enigma encryption
-                const encryptedLetter = enigmaEncrypt(letter, rotors, positions);
-
-                // Update the other STECKERED input
-                steckeredInputs[otherSteckeredIndex].value = encryptedLetter;
-
-                saveState();
+    steckeredInputs.forEach((input) => {
+        // Add a keyup event listener for immediate keyboard input handling
+        input.addEventListener('input', (event) => {
+            if (event.key && event.key.length === 1 && event.key.match(/[a-z]/i)) {
+                handleSteckeredInput(input, event.key.toUpperCase());
             }
         });
+
+        // Add a MutationObserver to watch for all other changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                    handleSteckeredInput(input, input.value);
+                }
+            });
+        });
+
+        observer.observe(input, {
+            attributes: true,
+            attributeFilter: ['value'],
+            characterData: true,
+            subtree: true
+        });
     });
+
+    const resetPlugboardButton = document.getElementById('reset-plugboard');
+
+    function setPlugboardStatus(message, color) {
+        plugboardStatus.textContent = message;
+        plugboardStatus.style.color = color;
+    }
+
+    function clearPlugboardStatus() {
+        plugboardStatus.textContent = '';
+        plugboardStatus.style.color = '';
+    }
+
+    function resetPlugboard() {
+        // Clear plugboard table
+        const plugboardRows = plugboardTable.rows;
+        for (let row of plugboardRows) {
+            row.cells[1].textContent = '';
+            row.cells[2].textContent = '';
+            row.style.backgroundColor = '';
+        }
+
+        // Clear STECKERED inputs
+        const steckeredInputs = document.querySelectorAll('.steckered');
+        steckeredInputs.forEach(input => {
+            input.value = '';
+        });
+
+        // Reset small buttons
+        const smallButtons = document.querySelectorAll('.small-button');
+        smallButtons.forEach(button => {
+            button.classList.remove('active');
+            button.style.backgroundColor = '#ddd';
+        });
+
+        clearPlugboardStatus();
+        // Save the reset state
+        saveState();
+    }
+
+    // Add event listener for RESET button
+    resetPlugboardButton.addEventListener('click', resetPlugboard);
+
 });

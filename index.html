@@ -15,25 +15,25 @@
         <div id="settings-and-plugboard">
             <div id="additional-settings">
                 <div id="initial-setting">
-                    <h3>INITIAL SETTING</h3>
+                    <p>INITIAL SETTING</p>
                     <div class="setting-inputs">
                         <div>
-                            <div class="setting-label">Fast</div>
-                            <input type="text" class="initial-setting" maxlength="1">
+                            <label for='slow-rotor-initial' class="setting-label">SLOW</label>
+                            <input type="text" id='slow-rotor-initial' class="initial-setting" maxlength="1">
                         </div>
                         <div>
-                            <div class="setting-label">Mid</div>
-                            <input type="text" class="initial-setting" maxlength="1">
+                            <label for='mid-rotor-initial' class="setting-label">MID</label>
+                            <input type="text" id='mid-rotor-initial' class="initial-setting" maxlength="1">
                         </div>
                         <div>
-                            <div class="setting-label">Slow</div>
-                            <input type="text" class="initial-setting" maxlength="1">
+                            <label for='fast-rotor-initial' class="setting-label">FAST</label>
+                            <input type="text" id='fast-rotor-initial' class="initial-setting" maxlength="1">
                         </div>
                     </div>
                     <div class="rotor-selectors">
                         <div>
-                            <label for="fast-rotor">Fast Rotor:</label>
-                            <select id="fast-rotor">
+                            <label for="slow-rotor">Slow Rotor:</label>
+                            <select id="slow-rotor">
                                 <option>I</option>
                                 <option>II</option>
                                 <option>III</option>
@@ -52,8 +52,8 @@
                             </select>
                         </div>
                         <div>
-                            <label for="slow-rotor">Slow Rotor:</label>
-                            <select id="slow-rotor">
+                            <label for="fast-rotor">Fast Rotor:</label>
+                            <select id="fast-rotor">
                                 <option>I</option>
                                 <option>II</option>
                                 <option>III</option>
@@ -71,7 +71,11 @@
             </div>
 
             <div id="plugboard">
-                <h3>PLUGBOARD</h3>
+                <div id="plugboard-status"></div>
+                <div class="plugboard-header">
+                    <h3>PLUGBOARD</h3>
+                    <button id="reset-plugboard">RESET</button>
+                </div>
                 <table>
                     <!-- Plugboard rows will be dynamically added here -->
                 </table>

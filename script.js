@@ -309,4 +309,91 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Call updateRotorPositions initially to set the default values
     updateWheelPositions();
+
+    const ROTOR_WIRINGS = {
+        'I': 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
+        'II': 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
+        'III': 'BDFHJLCPRTXVZNYEIWGAKMUSQO',
+        'IV': 'ESOVPZJAYQUIRHXLNFTGKDCMWB',
+        'V': 'VZBRGITYUPSDNHLXAWMJQOFECK'
+    };
+
+    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    // Enigma simulation functions
+    function rotorForward(letter, wiring) {
+        const index = ALPHABET.indexOf(letter);
+        return wiring[index];
+    }
+
+    function rotorReverse(letter, wiring) {
+        const index = wiring.indexOf(letter);
+        return ALPHABET[index];
+    }
+
+    function reflector(letter) {
+        // This is a simple reflector (ETW). You might want to implement a more complex one.
+        const index = (ALPHABET.indexOf(letter) + 13) % 26;
+        return ALPHABET[index];
+    }
+
+    function enigmaEncrypt(letter, rotors, positions) {
+        // Implement the full Enigma encryption process here
+        let result = letter;
+
+        // Forward through rotors
+        for (let i = 2; i >= 0; i--) {
+            const offset = ALPHABET.indexOf(positions[i]);
+            const shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
+            result = rotorForward(result, ROTOR_WIRINGS[rotors[i]]);
+            result = ALPHABET[shiftedAlphabet.indexOf(result)];
+        }
+
+        // Reflector
+        result = reflector(result);
+
+        // Backward through rotors
+        for (let i = 0; i < 3; i++) {
+            const offset = ALPHABET.indexOf(positions[i]);
+            const shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
+            result = shiftedAlphabet[ALPHABET.indexOf(result)];
+            result = rotorReverse(result, ROTOR_WIRINGS[rotors[i]]);
+        }
+
+        return result;
+    }
+
+    // Update the event listeners for STECKERED inputs
+    const steckeredInputs = document.querySelectorAll('.steckered');
+    steckeredInputs.forEach((input, index) => {
+        input.addEventListener('change', function() {
+            if (this.value.length === 1 && this.value.match(/[A-Z]/i)) {
+                const letter = this.value.toUpperCase();
+                const columnIndex = index % 32;
+                const otherSteckeredIndex = index < 32 ? index + 32 : index - 32;
+                const wheelPosInputs = document.querySelectorAll('.wheel-pos');
+                const rotorSelects = [
+                    document.getElementById('fast-rotor'),
+                    document.getElementById('middle-rotor'),
+                    document.getElementById('slow-rotor')
+                ];
+
+                // Get rotor settings and positions for this column
+                const rotors = rotorSelects.map(select => select.value);
+                const positions = [
+                    wheelPosInputs[columnIndex].value,
+                    wheelPosInputs[columnIndex + 32].value,
+                    wheelPosInputs[columnIndex + 64].value
+                ];
+
+                // Perform Enigma encryption
+                const encryptedLetter = enigmaEncrypt(letter, rotors, positions);
+
+                // Update the other STECKERED input
+                steckeredInputs[otherSteckeredIndex].value = encryptedLetter;
+
+                saveState();
+            }
+        });
+    });
 });

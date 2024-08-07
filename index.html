@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bombe Simulator</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
 </head>
 <body>
     <div id="main-container">
@@ -18,9 +17,12 @@
                 <div id="initial-setting">
                     <h3>INITIAL SETTING</h3>
                     <div class="setting-inputs">
-                        <input type="text" class="initial-setting" maxlength="1">
-                        <input type="text" class="initial-setting" maxlength="1">
-                        <input type="text" class="initial-setting" maxlength="1">
+                        <label for="fast-rotor-start">Fast</label>
+                        <input type="text" id='fast-rotor-start' class="initial-setting" maxlength="1">
+                        <label for="middle-rotor-start">Middle</label>
+                        <input type="text" id='middle-rotor-start' class="initial-setting" maxlength="1">
+                        <label for="slow-rotor-start">Slow</label>
+                        <input type="text" id='slow-rotor-start' class="initial-setting" maxlength="1">
                     </div>
                     <div class="rotor-selectors">
                         <div>

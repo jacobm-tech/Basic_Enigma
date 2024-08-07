@@ -7,15 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const advanceRotorsButton = document.getElementById('advance-rotors');
 
     // Add labels
-    const labels = ['PLAINTEXT', '', 'STECKERED', '', 'WHEEL POS', 'STECKERED', '', 'CIPHERTEXT'];
-    labels.forEach((text, index) => {
+    const labels = ['PLAINTEXT', '', 'STECKERED', '', 'FAST', 'MIDDLE', 'SLOW', 'STECKERED', '', 'CIPHERTEXT'];
+    labels.forEach((text/*, index*/) => {
         const label = document.createElement('div');
         label.className = 'label';
         label.textContent = text;
-        if (text === 'WHEEL POS') {
-            label.classList.add('wheel-pos-label');
-            label.style.gridRow = 'span 3';
-        }
+        // if (text === 'WHEEL POS') {
+        //     label.classList.add('wheel-pos-label');
+        //     label.style.gridRow = 'span 3';
+        // }
         label.style.gridColumn = 1;
         bombeSimulator.appendChild(label);
     });
@@ -253,12 +253,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function saveState() {
         console.log('Saving state...'); // Debug log
-        const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join('');
-        const steckered1 = Array.from(document.querySelectorAll('.steckered')).slice(0, 32).map(input => input.value).join('');
-        const wheelPos = Array.from(document.querySelectorAll('.wheel-pos')).map(input => input.value).join('');
-        const steckered2 = Array.from(document.querySelectorAll('.steckered')).slice(32).map(input => input.value).join('');
-        const ciphertext = Array.from(document.querySelectorAll('.ciphertext')).map(input => input.value).join('');
-        const initialSetting = Array.from(document.querySelectorAll('.initial-setting')).map(input => input.value).join('');
+        const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join(',');
+        const steckered1 = Array.from(document.querySelectorAll('.steckered')).slice(0, 32).map(input => input.value).join(',');
+        const wheelPos = Array.from(document.querySelectorAll('.wheel-pos')).map(input => input.value).join(',');
+        const steckered2 = Array.from(document.querySelectorAll('.steckered')).slice(32).map(input => input.value).join(',');
+        const ciphertext = Array.from(document.querySelectorAll('.ciphertext')).map(input => input.value).join(',');
+        const initialSetting = Array.from(document.querySelectorAll('.initial-setting')).map(input => input.value).join(',');
         const fastRotor = fastRotorSelect.value;
         const middleRotor = middleRotorSelect.value;
         const slowRotor = slowRotorSelect.value;
@@ -298,6 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setInputValues(selector, values, startIndex = 0) {
         const inputs = document.querySelectorAll(selector);
+        values = values.split(',')
         for (let i = 0; i < values.length; i++) {
             inputs[i + startIndex].value = values[i];
         }
@@ -307,5 +308,5 @@ document.addEventListener('DOMContentLoaded', function() {
     loadState();
 
     // Call updateRotorPositions initially to set the default values
-    updateRotorPositions();
+    updateWheelPositions();
 });

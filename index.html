@@ -5,34 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bombe Simulator</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
 </head>
 <body>
     <div id="main-container">
-        <div id="bombe-simulator"></div>
-        <div id="additional-settings">
-            <div id="initial-setting">
-                <h3>INITIAL SETTING</h3>
-                <div class="setting-inputs">
-                    <input type="text" maxlength="1" class="letter-input initial-setting">
-                    <input type="text" maxlength="1" class="letter-input initial-setting">
-                    <input type="text" maxlength="1" class="letter-input initial-setting">
+        <div id="bombe-simulator">
+            <!-- Labels and inputs will be dynamically added here -->
+        </div>
+
+        <div id="settings-and-plugboard">
+            <div id="additional-settings">
+                <div id="initial-setting">
+                    <h3>INITIAL SETTING</h3>
+                    <div class="setting-inputs">
+                        <input type="text" class="initial-setting" maxlength="1">
+                        <input type="text" class="initial-setting" maxlength="1">
+                        <input type="text" class="initial-setting" maxlength="1">
+                    </div>
+                    <div class="rotor-selectors">
+                        <div>
+                            <label for="fast-rotor">Fast Rotor:</label>
+                            <select id="fast-rotor">
+                                <option>I</option>
+                                <option>II</option>
+                                <option>III</option>
+                                <option>IV</option>
+                                <option>V</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="middle-rotor">Middle Rotor:</label>
+                            <select id="middle-rotor">
+                                <option>I</option>
+                                <option>II</option>
+                                <option>III</option>
+                                <option>IV</option>
+                                <option>V</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="slow-rotor">Slow Rotor:</label>
+                            <select id="slow-rotor">
+                                <option>I</option>
+                                <option>II</option>
+                                <option>III</option>
+                                <option>IV</option>
+                                <option>V</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+                        <button id="solve-plugboard">SOLVE PLUGBOARD</button>
+                        <button id="run-bombe">RUN BOMBE</button>
+                        <button id="advance-rotors">ADVANCE ROTORS</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div id="plugboard">
-            <h3>PLUGBOARD</h3>
-            <table>
-                <tr><td>1</td><td></td><td></td></tr>
-                <tr><td>2</td><td></td><td></td></tr>
-                <tr><td>3</td><td></td><td></td></tr>
-                <tr><td>4</td><td></td><td></td></tr>
-                <tr><td>5</td><td></td><td></td></tr>
-                <tr><td>6</td><td></td><td></td></tr>
-                <tr><td>7</td><td></td><td></td></tr>
-                <tr><td>8</td><td></td><td></td></tr>
-                <tr><td>9</td><td></td><td></td></tr>
-                <tr><td>10</td><td></td><td></td></tr>
-            </table>
+
+            <div id="plugboard">
+                <h3>PLUGBOARD</h3>
+                <table>
+                    <!-- Plugboard rows will be dynamically added here -->
+                </table>
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

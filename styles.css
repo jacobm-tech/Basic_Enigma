@@ -9,10 +9,12 @@ body, html {
 
 #main-container {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
     padding: 20px;
     gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 #bombe-simulator {
@@ -22,15 +24,19 @@ body, html {
     background-color: white;
     padding: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+/*    flex-grow: 1;
+    overflow: hidden;*/
 }
 
-#additional-settings {
-    background-color: white;
-    padding: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+#settings-and-plugboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 200px; /* Reduced from 250px */
+    flex-shrink: 0;
 }
 
-#plugboard {
+#additional-settings, #plugboard {
     background-color: white;
     padding: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -107,23 +113,74 @@ body, html {
 #initial-setting .setting-inputs {
     display: flex;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 5px; /* Reduced from 10px */
+}
+
+#initial-setting .setting-inputs input {
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.rotor-selectors {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.rotor-selectors div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rotor-selectors label {
+    font-size: 12px;
+    margin-right: 5px; /* Added to reduce space between label and dropdown */
+}
+
+.rotor-selectors select {
+    width: 50px; /* Reduced from 60px */
+}
+
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.control-buttons button {
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%; /* Make buttons full width of their container */
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflowing text */
+    text-overflow: ellipsis; /* Add ellipsis for overflowing text */
 }
 
 #plugboard table {
     border-collapse: collapse;
+    width: 100%;
 }
 
 #plugboard td {
     border: 1px solid #ddd;
-    padding: 5px;
+    padding: 2px; /* Reduced from 5px */
     text-align: center;
-    width: 30px;
 }
 
 #plugboard tr td:first-child {
     background-color: #f0f0f0;
     font-weight: bold;
+    width: 20px; /* Reduced from 30px */
+}
+
+#plugboard tr td:not(:first-child) {
+    width: 20px; /* Set to same width as letter inputs */
 }
 
 #plugboard tr.highlighted {

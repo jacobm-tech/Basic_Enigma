@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const bombeSimulator = document.getElementById('bombe-simulator');
     const plugboardTable = document.querySelector('#plugboard table');
+    const fastRotorSelect = document.getElementById('fast-rotor');
+    const middleRotorSelect = document.getElementById('middle-rotor');
+    const slowRotorSelect = document.getElementById('slow-rotor');
+    const advanceRotorsButton = document.getElementById('advance-rotors');
 
     // Add labels
     const labels = ['PLAINTEXT', '', 'STECKERED', '', 'WHEEL POS', 'STECKERED', '', 'CIPHERTEXT'];
@@ -55,6 +59,18 @@ document.addEventListener('DOMContentLoaded', function() {
     addRowElements(8, 'button', 'small-button', 32);
     addRowElements(9, 'input', 'letter-input ciphertext', 32);
 
+    // Create plugboard rows
+    for (let i = 1; i <= 10; i++) {
+        const row = plugboardTable.insertRow();
+        const cellNumber = row.insertCell(0);
+        const cellLetter1 = row.insertCell(1);
+        const cellLetter2 = row.insertCell(2);
+
+        cellNumber.textContent = i;
+        cellLetter1.textContent = '';
+        cellLetter2.textContent = '';
+    }
+
     // Add event listeners for input functionality
     const allInputs = document.querySelectorAll('.letter-input');
     allInputs.forEach((input, index) => {
@@ -65,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (index < allInputs.length - 1) {
                     allInputs[index + 1].focus();
                 }
+                saveState();
                 updateAdjacentButtons(this);
             } else if (e.key === 'Backspace' && this.value === '') {
                 e.preventDefault();
@@ -90,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (index < initialSettingInputs.length - 1) {
                     initialSettingInputs[index + 1].focus();
                 }
+                saveState();
                 updateWheelPositions();
             } else if (e.key === 'Backspace' && this.value === '') {
                 e.preventDefault();
@@ -217,4 +235,77 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return result.join('');
     }
+
+    // Function to advance rotors
+    function advanceRotors() {
+        const initialSettingInputs = document.querySelectorAll('.initial-setting');
+        let setting = Array.from(initialSettingInputs).map(input => input.value).join('');
+        setting = incrementSetting(setting, 1);
+        for (let i = 0; i < 3; i++) {
+            initialSettingInputs[i].value = setting[i];
+        }
+        saveState();
+        updateWheelPositions();
+    }
+
+    // Add event listener for ADVANCE ROTORS button
+    advanceRotorsButton.addEventListener('click', advanceRotors);
+
+    function saveState() {
+        console.log('Saving state...'); // Debug log
+        const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join('');
+        const steckered1 = Array.from(document.querySelectorAll('.steckered')).slice(0, 32).map(input => input.value).join('');
+        const wheelPos = Array.from(document.querySelectorAll('.wheel-pos')).map(input => input.value).join('');
+        const steckered2 = Array.from(document.querySelectorAll('.steckered')).slice(32).map(input => input.value).join('');
+        const ciphertext = Array.from(document.querySelectorAll('.ciphertext')).map(input => input.value).join('');
+        const initialSetting = Array.from(document.querySelectorAll('.initial-setting')).map(input => input.value).join('');
+        const fastRotor = fastRotorSelect.value;
+        const middleRotor = middleRotorSelect.value;
+        const slowRotor = slowRotorSelect.value;
+
+        const state = {
+            plaintext, steckered1, wheelPos, steckered2, ciphertext, initialSetting,
+            fastRotor, middleRotor, slowRotor
+        };
+
+        localStorage.setItem('bombeState', JSON.stringify(state));
+        console.log('State saved:', state); // Debug log
+    }
+
+    function loadState() {
+        console.log('Loading state...'); // Debug log
+        const stateJson = localStorage.getItem('bombeState');
+        if (stateJson) {
+            const state = JSON.parse(stateJson);
+
+            setInputValues('.plaintext', state.plaintext);
+            setInputValues('.steckered', state.steckered1, 0);
+            setInputValues('.wheel-pos', state.wheelPos);
+            setInputValues('.steckered', state.steckered2, 32);
+            setInputValues('.ciphertext', state.ciphertext);
+            setInputValues('.initial-setting', state.initialSetting);
+
+            fastRotorSelect.value = state.fastRotor;
+            middleRotorSelect.value = state.middleRotor;
+            slowRotorSelect.value = state.slowRotor;
+
+            updateWheelPositions();
+            console.log('State loaded:', state); // Debug log
+        } else {
+            console.log('No saved state found.'); // Debug log
+        }
+    }
+
+    function setInputValues(selector, values, startIndex = 0) {
+        const inputs = document.querySelectorAll(selector);
+        for (let i = 0; i < values.length; i++) {
+            inputs[i + startIndex].value = values[i];
+        }
+    }
+
+    // Load state when the page loads
+    loadState();
+
+    // Call updateRotorPositions initially to set the default values
+    updateRotorPositions();
 });

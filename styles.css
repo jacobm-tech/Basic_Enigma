@@ -112,8 +112,21 @@ body, html {
 
 #initial-setting .setting-inputs {
     display: flex;
-    justify-content: flex-start;
-    gap: 5px; /* Reduced from 10px */
+    justify-content: space-between;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+#initial-setting .setting-inputs > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#initial-setting .setting-inputs .setting-label {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 2px;
 }
 
 #initial-setting .setting-inputs input {
@@ -122,6 +135,7 @@ body, html {
     text-align: center;
     font-size: 14px;
 }
+
 
 .rotor-selectors {
     display: flex;

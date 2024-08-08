@@ -344,15 +344,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    // Enigma simulation functions
-    function rotorForward(letter, wiring) {
-        const index = ALPHABET.indexOf(letter);
-        return wiring[index];
-    }
+    function caesar(letter, from, to) {
+        const n = ALPHABET.length;
+        const fromIndex = ALPHABET.indexOf(from.toUpperCase());
+        const toIndex = ALPHABET.indexOf(to.toUpperCase());
 
-    function rotorReverse(letter, wiring) {
-        const index = wiring.indexOf(letter);
-        return ALPHABET[index];
+        if (fromIndex === -1 || toIndex === -1) {
+            throw new Error("Both FROM and TO letters must be in the alphabet");
+        }
+
+        let offset = (toIndex - fromIndex + n) % n;
+        let shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
+        return shiftedAlphabet[ALPHABET.indexOf(letter)];
     }
 
     function reflector(letter) {
@@ -360,29 +363,41 @@ document.addEventListener('DOMContentLoaded', function() {
         return ALPHABET[index];
     }
 
+    function reverse(letter, ROTOR) {
+        const index = ROTOR_WIRINGS[ROTOR].indexOf(letter);
+        return ALPHABET[index];
+    }
+
+    function forward(letter, ROTOR) {
+        const index = ALPHABET.indexOf(letter);
+        return ROTOR_WIRINGS[ROTOR][index];
+    }
+
     function enigmaEncrypt(letter, rotors, positions) {
         // Implement the full Enigma encryption process here
-        let result = letter;
+        let result;
 
         // Forward through rotors
-        for (let i = 0; i < 3; i++) {
-            const offset = ROTOR_WIRINGS[rotors[i]].indexOf(positions[i]);
-            const shiftedRotor = ROTOR_WIRINGS[rotors[i]].slice(offset) +
-                                 ROTOR_WIRINGS[rotors[i]].slice(0,offset);
-            result = rotorForward(result, shiftedRotor);
-        }
+        result = caesar(letter, 'A', positions[0]);
+        result = forward(result, rotors[0]);
+        result = caesar(result, positions[0], positions[1]);
+        result = forward(result, rotors[1]);
+        result = caesar(result, positions[1], positions[2]);
+        result = forward(result, rotors[2]);
+        result = caesar(result, positions[2], 'A');
 
-        // Reflector
         result = reflector(result);
 
-        // Backward through rotors
-        for (let i = 2; i >= 0; i--) {
-            const offset = ROTOR_WIRINGS[rotors[i]].indexOf(positions[i]);
-            const shiftedRotor = ROTOR_WIRINGS[rotors[i]].slice(offset) +
-                                 ROTOR_WIRINGS[rotors[i]].slice(0, offset);
-            result = rotorReverse(result, shiftedRotor);
-        }
+        result = caesar(result, 'A', positions[2]);
+        result = reverse(result, rotors[2]);
+        result = caesar(result, positions[2], positions[1]);
+        result = reverse(result, rotors[1]);
+        result = caesar(result, positions[1], positions[0]);
+        result = reverse(result, rotors[0]);
+        result = caesar(result, positions[0], 'A');
 
+        // console.log('Rotor ' + rotors[i] + ' translated ' + before + ' to ' + result);
+        // console.log('Reflector ' + 'translated ' + before + ' to ' + result);
         return result;
     }
 

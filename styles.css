@@ -110,6 +110,11 @@ body, html {
     white-space: nowrap;
 }
 
+#initial-setting h3 {
+    margin-top: 0;
+    font-size: 12px; /* Adjust font size if needed */
+}
+
 #initial-setting .setting-inputs {
     display: flex;
     justify-content: space-between;
@@ -178,7 +183,7 @@ body, html {
 
 #plugboard {
     background-color: white;
-    padding: 10px;
+    padding: 5px 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
     font-size: 12px; /* Reduced font size for compactness */
 }

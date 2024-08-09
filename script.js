@@ -11,6 +11,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const midInitialSetting = document.getElementById('mid-rotor-initial');
     const slowInitialSetting = document.getElementById('slow-rotor-initial');
 
+    const ROTOR_WIRINGS = {
+        'I': 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
+        'II': 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
+        'III': 'BDFHJLCPRTXVZNYEIWGAKMUSQO',
+        'IV': 'ESOVPZJAYQUIRHXLNFTGKDCMWB',
+        'V': 'VZBRGITYUPSDNHLXAWMJQOFECK'
+    };
+
+    const ROTOR_NOTCHES = {
+        'I': 'Q',
+        'II': 'E',
+        'III': 'V',
+        'IV': 'J',
+        'V': 'Z'
+    };
+
+    const REFLECTOR = 'YRUHQSLDPXNGOKMIEBFZCWVJAT'
+
+    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 
     // Add labels
     const labels = ['PLAINTEXT', '', 'STECKERED', '', 'FAST', 'MIDDLE', 'SLOW', 'STECKERED', '', 'CIPHERTEXT'];
@@ -22,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //     label.classList.add('wheel-pos-label');
         //     label.style.gridRow = 'span 3';
         // }
-        label.style.gridColumn = 1;
+        label.style.gridColumn = String(1);
         bombeSimulator.appendChild(label);
     });
 
@@ -40,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             element.style.gridRow = rowIndex + 1;
-            element.style.gridColumn = i + 2; // +2 because the first column is for labels
+            element.style.gridColumn = String(i + 2); // +2 because the first column is for labels
             bombeSimulator.appendChild(element);
         }
     }
@@ -70,13 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
     addRowElements(9, 'input', 'letter-input ciphertext', 32);
 
     // Create plugboard rows
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 13; i++) {
         const row = plugboardTable.insertRow();
         const cellNumber = row.insertCell(0);
         const cellLetter1 = row.insertCell(1);
         const cellLetter2 = row.insertCell(2);
 
-        cellNumber.textContent = i;
+        cellNumber.textContent = String(i);
         cellLetter1.textContent = '';
         cellLetter2.textContent = '';
     }
@@ -181,10 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updatePlugboard(letter1, letter2) {
-        if (letter1 === letter2) {
-            return; // Do nothing if both letters are the same
-        }
-
         const existingPair = findExistingPair(letter1, letter2);
         if (existingPair) {
             if ((existingPair[0] === letter1 && existingPair[1] === letter2) ||
@@ -232,42 +248,61 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (initialSetting.length === 3) {
             const wheelPosInputs = document.querySelectorAll('.wheel-pos');
-            for (let i = 0; i < 32; i++) {
-                let setting = incrementSetting(initialSetting, i);
+            wheelPosInputs[0].value = fastSetting;
+            wheelPosInputs[32].value = midSetting;
+            wheelPosInputs[64].value = slowSetting;
+
+            for (let i = 1; i < 32; i++) {
+                let settings = [];
                 for (let j = 0; j < 3; j++) {
-                    wheelPosInputs[i + j * 32].value = setting[j];
+                    settings[j] = wheelPosInputs[i-1 + j*32].value
+                }
+                settings = stepRotors(settings[0], settings[1], settings[2]);
+                for (let j = 0; j < 3; j++) {
+                    wheelPosInputs[i + j * 32].value = settings[j];
                 }
             }
         }
     }
 
-    function incrementSetting(setting, increment) {
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        let result = setting.split('');
-        for (let i = 0; i < increment; i++) {
-            result[0] = alphabet[(alphabet.indexOf(result[0]) + 1) % 26];
-            if (result[0] === 'A') {
-                result[1] = alphabet[(alphabet.indexOf(result[1]) + 1) % 26];
-                if (result[1] === 'A') {
-                    result[2] = alphabet[(alphabet.indexOf(result[2]) + 1) % 26];
-                }
-            }
+    function stepRotors(fastPos, midPos, slowPos) {
+        const rotorSelects = [
+          document.getElementById('fast-rotor'),
+          document.getElementById('middle-rotor'),
+          document.getElementById('slow-rotor')
+        ];
+
+        // Get rotor settings and positions for this column
+        const rotors = rotorSelects.map(select => select.value);
+
+        if (midPos === ROTOR_NOTCHES[rotors[1]]) {
+            // This is the extra step.
+            midPos = caesar(midPos, 'A', 'B');
+            // The slow wheel steps normally when
+                // the middle wheel reaches its notch.
+            slowPos = caesar(slowPos, 'A', 'B');
         }
-        return result.join('');
+
+        if(fastPos === ROTOR_NOTCHES[rotors[0]]) {
+            // This is normal middle wheel rotation.
+            midPos = caesar(midPos, 'A', 'B');
+        }
+
+        // Fast rotor always steps.
+        fastPos = caesar(fastPos, 'A', 'B');
+
+        return [fastPos, midPos, slowPos];
     }
 
     // Function to advance rotors
     function advanceRotors() {
-        let fastSetting = fastInitialSetting.value;
-        let midSetting = midInitialSetting.value;
-        let slowSetting = slowInitialSetting.value;
-        let initialSetting = fastSetting + midSetting + slowSetting;
-
-        let setting = incrementSetting(initialSetting, 1);
-        slowInitialSetting.value = setting[2];
-        midInitialSetting.value = setting[1];
-        fastInitialSetting.value = setting[0];
-
+        fastInitialSetting.value = caesar(fastInitialSetting.value, 'A', 'B');
+        if(fastInitialSetting.value === 'A') {
+            midInitialSetting.value = caesar(midInitialSetting.value, 'A', 'B');
+            if(midInitialSetting.value === 'A') {
+                slowInitialSetting.value = caesar(slowInitialSetting.value, 'A', 'B');
+            }
+        }
         saveState();
         updateWheelPositions();
     }
@@ -332,18 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call updateRotorPositions initially to set the default values
     updateWheelPositions();
 
-    const ROTOR_WIRINGS = {
-        'I': 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
-        'II': 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
-        'III': 'BDFHJLCPRTXVZNYEIWGAKMUSQO',
-        'IV': 'ESOVPZJAYQUIRHXLNFTGKDCMWB',
-        'V': 'VZBRGITYUPSDNHLXAWMJQOFECK'
-    };
-
-    const REFLECTOR = 'YRUHQSLDPXNGOKMIEBFZCWVJAT'
-
-    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
     function caesar(letter, from, to) {
         const n = ALPHABET.length;
         const fromIndex = ALPHABET.indexOf(from.toUpperCase());
@@ -375,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function enigmaEncrypt(letter, rotors, positions) {
         // Implement the full Enigma encryption process here
+        positions = stepRotors(positions[0], positions[1], positions[2]);
         let result;
 
         // Forward through rotors

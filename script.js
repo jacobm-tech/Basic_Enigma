@@ -445,11 +445,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 wheelPosInputs[columnIndex + 64].value
             ];
 
-            // Perform Enigma encryption
-            let encryptedLetter = enigmaEncrypt(letter, rotors, positions);
+            // Perform Enigma encryption and
+            // update the other STECKERED input
+            steckeredInputs[otherSteckeredIndex].value =
+              enigmaEncrypt(letter, rotors, positions);
 
-            // Update the other STECKERED input
-            steckeredInputs[otherSteckeredIndex].value = encryptedLetter;
             let e = new Event('input');
             steckeredInputs[otherSteckeredIndex].dispatchEvent(e);
 

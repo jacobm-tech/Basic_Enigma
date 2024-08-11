@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
     for (let i = 0; i < 32; i++) {
         const label = document.createElement('div');
         label.className = 'scrambler-label';
-        label.textContent = 'SCRAMBLER'.split("").sort(() => 0.5 - Math.random()).join("") + ' ' + String(i + 1).padStart(2, '0');
+        label.textContent = 'SCRAMBLER'.split("")./*sort(() => 0.5 - Math.random()).*/join("") + ' ' + String(i + 1).padStart(2, '0');
         label.style.gridRow = String(4);
         label.style.gridColumn = String(i + 2);
         bombeSimulator.appendChild(label);
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addRowElements(9, 'input', 'letter-input ciphertext', 32);
 
     // Create plugboard rows
-    for (let i = 1; i <= 13; i++) {
+    for (let i = 1; i <= 10; i++) {
         const row = plugboardTable.insertRow();
         const cellNumber = row.insertCell(0);
         const cellLetter1 = row.insertCell(1);
@@ -99,6 +99,15 @@ document.addEventListener('DOMContentLoaded', function() {
         cellNumber.textContent = String(i);
         cellLetter1.textContent = '';
         cellLetter2.textContent = '';
+
+        if (i<7) {
+            const unsteckeredNo = row.insertCell(3);
+            unsteckeredNo.textContent = String(i);
+            const unsteckered1 = row.insertCell(4);
+            const unsteckered2 = row.insertCell(5);
+            unsteckered1.textContent = '';
+            unsteckered2.textContent = '';
+        }
     }
 
     // Add event listeners for input functionality
@@ -201,43 +210,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updatePlugboard(letter1, letter2) {
+        if (plugboardStatus.textContent !== '')
+            return;
         const existingPair = findExistingPair(letter1, letter2);
+        let inconsistent = false;
         if (existingPair) {
-            if ((existingPair[0] === letter1 && existingPair[1] === letter2) ||
-                (existingPair[0] === letter2 && existingPair[1] === letter1)) {
+            if ((existingPair[0].textContent === letter1 && existingPair[1].textContent === letter2) ||
+                (existingPair[0].textContent === letter2 && existingPair[1].textContent === letter1)) {
                 return; // Do nothing if the pair already exists
             } else {
+                existingPair[0].style.backgroundColor = 'yellow';
+                existingPair[1].style.backgroundColor = 'yellow';
                 setPlugboardStatus('INCONSISTENT', 'red');
-                return;
+                inconsistent = true;
             }
         }
 
-        const emptyRow = Array.from(plugboardTable.rows).find(row => !row.cells[1].textContent);
+        let emptyRow, firstCell, secondCell;
+        if (letter1 === letter2) {
+            firstCell = 4;
+            secondCell = 5;
+        }
+        else {
+            firstCell = 1;
+            secondCell = 2;
+        }
+        emptyRow = Array.from(plugboardTable.rows).find(row =>
+          (row.cells[firstCell] !== undefined) && !row.cells[firstCell].textContent);
+
         if (emptyRow) {
-            emptyRow.cells[1].textContent = letter1;
-            emptyRow.cells[2].textContent = letter2;
-            highlightPlugboardRow(emptyRow);
+            emptyRow.cells[firstCell].textContent = letter1;
+            emptyRow.cells[secondCell].textContent = letter2;
+            if (inconsistent) {
+                emptyRow.cells[firstCell].style.backgroundColor = 'yellow';
+                emptyRow.cells[secondCell].style.backgroundColor = 'yellow';
+            }
         } else {
-            setPlugboardStatus('FULL', 'red');
+            if (letter1 === letter2) {
+                setPlugboardStatus('TOO MANY UNPAIRED', 'red');
+            }
+            else{
+                setPlugboardStatus('TOO MANY PAIRS', 'red');
+            }
         }
     }
 
     function findExistingPair(letter1, letter2) {
         for (let row of plugboardTable.rows) {
-            const l1 = row.cells[1].textContent;
-            const l2 = row.cells[2].textContent;
-            if (l1 === letter1 || l1 === letter2 || l2 === letter1 || l2 === letter2) {
-                return [l1, l2];
+            for (let cell of row.cells) {
+                if (cell.textContent === letter1 || cell.textContent === letter2) {
+                    if (cell.cellIndex < 4) {
+                        return [row.cells[1], row.cells[2]];
+                    }
+                    return [row.cells[4], row.cells[5]];
+                }
             }
         }
         return null;
-    }
-
-    function highlightPlugboardRow(row) {
-        // Remove highlight from all rows
-        Array.from(plugboardTable.rows).forEach(r => r.style.backgroundColor = '');
-        // Highlight the updated row
-        row.style.backgroundColor = 'yellow';
     }
 
     function updateWheelPositions() {
@@ -264,6 +293,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    fastRotorSelect.addEventListener('change', function () {
+        updateWheelPositions();
+    });
+    middleRotorSelect.addEventListener('change', function () {
+        updateWheelPositions();
+    });
+    slowRotorSelect.addEventListener('change', function () {
+        updateWheelPositions();
+    });
 
     function stepRotors(fastPos, midPos, slowPos) {
         const rotorSelects = [
@@ -495,13 +534,20 @@ document.addEventListener('DOMContentLoaded', function() {
         plugboardStatus.style.color = '';
     }
 
+    function isLetter(c) {
+        return c.toLowerCase() !== c.toUpperCase();
+    }
+
     function resetPlugboard() {
         // Clear plugboard table
         const plugboardRows = plugboardTable.rows;
         for (let row of plugboardRows) {
-            row.cells[1].textContent = '';
-            row.cells[2].textContent = '';
-            row.style.backgroundColor = '';
+            for (let cell of row.cells) {
+                if(isLetter(cell.textContent)) {
+                    cell.textContent = '';
+                    cell.style.backgroundColor = '';
+                }
+            }
         }
 
         // Clear STECKERED inputs

@@ -232,11 +232,22 @@ body, html {
     width: 15px; /* Reduced width for compactness */
 }
 
+#plugboard tr td:nth-child(4) {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    width: 15px; /* Reduced width for compactness */
+}
+
 #plugboard tr td:not(:first-child) {
     width: 15px; /* Reduced width for compactness */
 }
 
-#plugboard tr.highlighted {
+#plugboard td.highlighted {
     background-color: yellow;
+    transition: background-color 0.3s ease;
+}
+
+#plugboard td.error {
+    background-color: red;
     transition: background-color 0.3s ease;
 }

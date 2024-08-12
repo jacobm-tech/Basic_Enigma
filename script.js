@@ -403,18 +403,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function reachSteadyState(plugs) {
-            let pp = new Map(plugs);
-            for (let i=0; i<10; i++) {
-                pp = propagatePlugboard(pp, plaintext, ciphertext);
-                if (pp === undefined) {
+            let pl = new Map(plugs);
+            let prevSize;
+            do {
+                prevSize = pl.size;
+                pl = propagatePlugboard(pl, plaintext, ciphertext);
+                if (pl === undefined) {
                     return undefined;
                 }
-                pp = propagatePlugboard(pp, ciphertext, plaintext);
-                if (pp === undefined) {
+                pl = propagatePlugboard(pl, ciphertext, plaintext);
+                if (pl === undefined) {
                     return undefined;
                 }
-            }
-            return pp;
+            } while (pl.size !== prevSize);
+            return pl;
         }
 
         function propagatePlugboard(pl, side1, side2) {
@@ -483,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetPlugboard();
         let pl;
         for (let i=0; i<17576; i++) {
-            await new Promise(r => setTimeout(r, 0.5));
+            await new Promise(r => setTimeout(r, 0.001));
             advanceRotors();
             pl = solvePlugboardValues(new Map());
             console.log(pl);

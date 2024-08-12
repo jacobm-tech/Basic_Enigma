@@ -472,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let PLUGBOARD = solvePlugboardValues(new Map());
         // Copy solution to input cells
         mapToPlugboard(PLUGBOARD);
-        if (PLUGBOARD === undefined) {
+        if (PLUGBOARD !== undefined) {
             setPlugboardStatus("SOLVED", 'green');
         }
         else {

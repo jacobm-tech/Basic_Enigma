@@ -450,9 +450,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             tempPlugboard = reachSteadyState(tempPlugboard);
             if(tempPlugboard !== undefined) {
-                console.log('got something');
                 tempPlugboard = solvePlugboardValues(tempPlugboard);
-                return tempPlugboard;
+                if(tempPlugboard !== undefined) {
+                    return tempPlugboard;
+                }
             }
         }
         return undefined;
@@ -485,10 +486,9 @@ document.addEventListener('DOMContentLoaded', function() {
         resetPlugboard();
         let pl;
         for (let i=0; i<17576; i++) {
-            await new Promise(r => setTimeout(r, 0.001));
+            // await new Promise(r => setTimeout(r, 0.001));
             advanceRotors();
             pl = solvePlugboardValues(new Map());
-            console.log(pl);
             if (pl !== undefined) {
                 mapToPlugboard(pl);
                 setPlugboardStatus("STOP FOUND", 'green');

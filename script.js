@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const middleRotorSelect = document.getElementById('middle-rotor');
     const slowRotorSelect = document.getElementById('slow-rotor');
     const advanceRotorsButton = document.getElementById('advance-rotors');
+    const solvePlugboardButton = document.getElementById('solve-plugboard');
     const plugboardStatus = document.getElementById('plugboard-status');
 
     const fastInitialSetting = document.getElementById('fast-rotor-initial');
@@ -346,8 +347,125 @@ document.addEventListener('DOMContentLoaded', function() {
         updateWheelPositions();
     }
 
+    function  frequencyMap (arr) {
+        return arr.reduce((acc, curr) => {
+            acc[curr] = (acc[curr] || 0) + 1;
+            return acc;
+        }, {});
+    }
+
+    function  mostFrequent(frequencyMap) {
+        let maxCount = 0;
+        let mostFrequentElement;
+        for (const [element, count] of Object.entries(frequencyMap)) {
+            if (count > maxCount) {
+                maxCount = count;
+                mostFrequentElement = element;
+            }
+        }
+        return mostFrequentElement;
+    }
+
+    function solvePlugboardValues(plugboard) {
+        const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value);
+        const ciphertext = Array.from(document.querySelectorAll('.ciphertext')).map(input => input.value);
+
+        const unsolved = (plaintext.concat(ciphertext)).filter(function (letter){
+            return isLetter(letter) && !plugboard.has(letter);
+        });
+
+        let map = frequencyMap(unsolved);
+        let L = mostFrequent(map);
+
+        const rotorSelects = [
+            document.getElementById('fast-rotor'),
+            document.getElementById('middle-rotor'),
+            document.getElementById('slow-rotor')
+        ];
+        const wheelPosInputs = document.querySelectorAll('.wheel-pos');
+
+        function checkPlugboard(plugs, pair) {
+            if(plugs.has(pair[0]) || plugs.has(pair[1])) {
+                if(plugs.get(pair[0]) === pair[1]) {
+                    return plugs;
+                }
+                return undefined;
+            }
+            plugs.set(pair[0], pair[1]);
+            plugs.set(pair[1], pair[0]);
+            return plugs;
+        }
+
+        function reachSteadyState(plugs) {
+            let pp = new Map(plugs);
+            for (let i=0; i<10; i++) {
+                pp = propagatePlugboard(pp, plaintext, ciphertext);
+                if (pp === undefined) {
+                    return undefined;
+                }
+                pp = propagatePlugboard(pp, ciphertext, plaintext);
+                if (pp === undefined) {
+                    return undefined;
+                }
+            }
+            return pp;
+        }
+
+        function propagatePlugboard(pl, side1, side2) {
+            for (let j=0; j<32; j++) {
+                const positions = [
+                    wheelPosInputs[j].value,
+                    wheelPosInputs[j + 32].value,
+                    wheelPosInputs[j + 64].value
+                ];
+                if (pl.has(side1[j])) {
+                    let sc = pl.get(side1[j]);
+                    let sp = enigmaEncrypt(sc, rotors, positions);
+                    pl = checkPlugboard(pl, [sp, side2[j]]);
+                }
+                if (pl === undefined) {
+                    console.log('inconsistent');
+                    return undefined;
+                }
+            }
+            return pl;
+        }
+
+        const rotors = rotorSelects.map(select => select.value);
+
+        for (let p of ALPHABET) {
+            if (plugboard.has(p)) { continue; }
+
+            // pair L with p and reach steady state
+            let tempPlugboard = new Map(plugboard);
+            tempPlugboard.set(p, L);
+            tempPlugboard.set(L, p);
+
+            tempPlugboard = reachSteadyState(tempPlugboard);
+            if(tempPlugboard !== undefined) {
+                console.log('got something');
+                return tempPlugboard;
+            }
+            else {
+                console.log('nothing');
+            }
+        }
+        return undefined;
+    }
+
+    function solvePlugboard() {
+        let PLUGBOARD = solvePlugboardValues(new Map());
+        // Copy solution to input cells
+        for (let entry of PLUGBOARD) {
+            updatePlugboard(entry[0], entry[1]);
+        }
+        saveState();
+    }
+
     // Add event listener for ADVANCE ROTORS button
     advanceRotorsButton.addEventListener('click', advanceRotors);
+        // Add event listener for ADVANCE ROTORS button
+    solvePlugboardButton.addEventListener('click', solvePlugboard);
 
     function saveState() {
         const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join(',');

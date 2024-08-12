@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const slowRotorSelect = document.getElementById('slow-rotor');
     const advanceRotorsButton = document.getElementById('advance-rotors');
     const solvePlugboardButton = document.getElementById('solve-plugboard');
+    const runBombeButton = document.getElementById('run-bombe');
+
     const plugboardStatus = document.getElementById('plugboard-status');
 
     const fastInitialSetting = document.getElementById('fast-rotor-initial');
@@ -374,6 +376,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return isLetter(letter) && !plugboard.has(letter);
         });
 
+        if (unsolved.length === 0) {
+            return plugboard;
+        }
+
         let map = frequencyMap(unsolved);
         let L = mostFrequent(map);
 
@@ -424,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     pl = checkPlugboard(pl, [sp, side2[j]]);
                 }
                 if (pl === undefined) {
-                    console.log('inconsistent');
                     return undefined;
                 }
             }
@@ -444,28 +449,59 @@ document.addEventListener('DOMContentLoaded', function() {
             tempPlugboard = reachSteadyState(tempPlugboard);
             if(tempPlugboard !== undefined) {
                 console.log('got something');
+                tempPlugboard = solvePlugboardValues(tempPlugboard);
                 return tempPlugboard;
-            }
-            else {
-                console.log('nothing');
             }
         }
         return undefined;
     }
 
+    function mapToPlugboard(plugboard) {
+        if (plugboard === undefined) {
+            return;
+        }
+        for (let entry of plugboard) {
+            updatePlugboard(entry[0], entry[1]);
+        }
+    }
+
     function solvePlugboard() {
         let PLUGBOARD = solvePlugboardValues(new Map());
         // Copy solution to input cells
-        for (let entry of PLUGBOARD) {
-            updatePlugboard(entry[0], entry[1]);
+        mapToPlugboard(PLUGBOARD);
+        if (PLUGBOARD === undefined) {
+            setPlugboardStatus("SOLVED", 'green');
         }
-        saveState();
+        else {
+            setPlugboardStatus("NO SOLUTION", 'red');
+        }
+
+        return false;
+    }
+
+    async function runBombe() {
+        resetPlugboard();
+        let pl;
+        for (let i=0; i<17576; i++) {
+            await new Promise(r => setTimeout(r, 0.5));
+            advanceRotors();
+            pl = solvePlugboardValues(new Map());
+            console.log(pl);
+            if (pl !== undefined) {
+                mapToPlugboard(pl);
+                setPlugboardStatus("STOP FOUND", 'green');
+                return;
+            }
+        }
+        setPlugboardStatus("NO STOP FOUND", 'red');
     }
 
     // Add event listener for ADVANCE ROTORS button
     advanceRotorsButton.addEventListener('click', advanceRotors);
         // Add event listener for ADVANCE ROTORS button
     solvePlugboardButton.addEventListener('click', solvePlugboard);
+    runBombeButton.addEventListener('click', runBombe);
+
 
     function saveState() {
         const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join(',');

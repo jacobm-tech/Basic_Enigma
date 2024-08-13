@@ -3,3 +3,4 @@
 /profile_output*.txt
 /.venv/
 /.idea
+/eslint.config.js

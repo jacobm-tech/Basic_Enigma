@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'V': 'Z'
     };
 
-    const REFLECTOR = 'YRUHQSLDPXNGOKMIEBFZCWVJAT'
+    const REFLECTOR = 'YRUHQSLDPXNGOKMIEBFZCWVJAT';
 
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        let emptyRow, firstCell, secondCell;
+        let firstCell, secondCell;
         if (letter1 === letter2) {
             firstCell = 4;
             secondCell = 5;
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
             firstCell = 1;
             secondCell = 2;
         }
-        emptyRow = Array.from(plugboardTable.rows).find(row =>
+        const emptyRow = Array.from(plugboardTable.rows).find(row =>
           (row.cells[firstCell] !== undefined) && !row.cells[firstCell].textContent);
 
         if (emptyRow) {
@@ -259,8 +259,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function findExistingPair(letter1, letter2) {
-        for (let row of plugboardTable.rows) {
-            for (let cell of row.cells) {
+        for (const row of plugboardTable.rows) {
+            for (const cell of row.cells) {
                 if (cell.textContent === letter1 || cell.textContent === letter2) {
                     if (cell.cellIndex < 4) {
                         return [row.cells[1], row.cells[2]];
@@ -273,10 +273,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateWheelPositions() {
-        let fastSetting = fastInitialSetting.value;
-        let midSetting = midInitialSetting.value;
-        let slowSetting = slowInitialSetting.value;
-        let initialSetting = fastSetting + midSetting + slowSetting;
+        const fastSetting = fastInitialSetting.value;
+        const midSetting = midInitialSetting.value;
+        const slowSetting = slowInitialSetting.value;
+        const initialSetting = fastSetting + midSetting + slowSetting;
 
         if (initialSetting.length === 3) {
             const wheelPosInputs = document.querySelectorAll('.wheel-pos');
@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             for (let i = 1; i < 32; i++) {
                 let settings = [];
                 for (let j = 0; j < 3; j++) {
-                    settings[j] = wheelPosInputs[i-1 + j*32].value
+                    settings[j] = wheelPosInputs[i-1 + j*32].value;
                 }
                 settings = stepRotors(settings[0], settings[1], settings[2]);
                 for (let j = 0; j < 3; j++) {
@@ -380,8 +380,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return plugboard;
         }
 
-        let map = frequencyMap(unsolved);
-        let L = mostFrequent(map);
+        const map = frequencyMap(unsolved);
+        const L = mostFrequent(map);
 
         const rotorSelects = [
             document.getElementById('fast-rotor'),
@@ -427,8 +427,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     wheelPosInputs[j + 64].value
                 ];
                 if (pl.has(side1[j])) {
-                    let sc = pl.get(side1[j]);
-                    let sp = enigmaEncrypt(sc, rotors, positions);
+                    const sc = pl.get(side1[j]);
+                    const sp = enigmaEncrypt(sc, rotors, positions);
                     pl = checkPlugboard(pl, [sp, side2[j]]);
                 }
                 if (pl === undefined) {
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function mergePlugboards(plboards) {
-            let merged = new Map();
+            const merged = new Map();
                         const allSolvedLetters = new Set(
                 plboards.flatMap(m => Array.from(m.keys()))
                 );
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const values = plboards
                   .filter(m => m.has(letter)) //only maps with this key
                   .map(m => m.get(letter));
-                let v = new Set(values);
+                const v = new Set(values);
                 if(v.size === 1 && values.length === plboards.length) {
                     merged.set(letter, values[0]);
                     merged.set(values[0], letter);
@@ -457,8 +457,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const rotors = rotorSelects.map(select => select.value);
-        let possibleBoards = new Array(0);
-        for (let p of ALPHABET) {
+        const possibleBoards = new Array(0);
+        for (const p of ALPHABET) {
             if (plugboard.has(p)) { continue; }
 
             // pair L with p and reach steady state
@@ -484,14 +484,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (plugboard === undefined) {
             return;
         }
-        for (let entry of plugboard) {
+        for (const entry of plugboard) {
             updatePlugboard(entry[0], entry[1]);
         }
     }
 
     function solvePlugboard() {
         resetPlugboard();
-        let PLUGBOARD = solvePlugboardValues(new Map());
+        const PLUGBOARD = solvePlugboardValues(new Map());
         if (PLUGBOARD !== undefined) {
             // Copy solution to input cells
             mapToPlugboard(PLUGBOARD);
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setInputValues(selector, values, startIndex = 0) {
         const inputs = document.querySelectorAll(selector);
-        values = values.split(',')
+        values = values.split(',');
         for (let i = 0; i < values.length; i++) {
             inputs[i + startIndex].value = values[i];
         }
@@ -593,8 +593,8 @@ document.addEventListener('DOMContentLoaded', function() {
             throw new Error("Both FROM and TO letters must be in the alphabet");
         }
 
-        let offset = (toIndex - fromIndex + n) % n;
-        let shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
+        const offset = (toIndex - fromIndex + n) % n;
+        const shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
         return shiftedAlphabet[ALPHABET.indexOf(letter)];
     }
 
@@ -667,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
             steckeredInputs[otherSteckeredIndex].value =
               enigmaEncrypt(letter, rotors, positions);
 
-            let e = new Event('input');
+            const e = new Event('input');
             steckeredInputs[otherSteckeredIndex].dispatchEvent(e);
 
             saveState();
@@ -719,8 +719,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetPlugboard() {
         // Clear plugboard table
         const plugboardRows = plugboardTable.rows;
-        for (let row of plugboardRows) {
-            for (let cell of row.cells) {
+        for (const row of plugboardRows) {
+            for (const cell of row.cells) {
                 if(isLetter(cell.textContent)) {
                     cell.textContent = '';
                     cell.style.backgroundColor = '';

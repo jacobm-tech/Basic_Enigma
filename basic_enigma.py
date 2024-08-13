@@ -4,6 +4,9 @@ import time
 from statistics import quantiles
 import random
 from utils import *
+import python-enigma
+
+
 # from line_profiler_pycharm import profile
 
 

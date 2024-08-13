@@ -438,8 +438,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return pl;
         }
 
-        const rotors = rotorSelects.map(select => select.value);
+        function mergePlugboards(plboards) {
+            let merged = new Map();
+                        const allSolvedLetters = new Set(
+                plboards.flatMap(m => Array.from(m.keys()))
+                );
+            for (const letter of allSolvedLetters) {
+                const values = plboards
+                  .filter(m => m.has(letter)) //only maps with this key
+                  .map(m => m.get(letter));
+                let v = new Set(values);
+                if(v.size === 1 && values.length === plboards.length) {
+                    merged.set(letter, values[0]);
+                    merged.set(values[0], letter);
+                }
+            }
+            return merged;
+        }
 
+        const rotors = rotorSelects.map(select => select.value);
+        let possibleBoards = new Array(0);
         for (let p of ALPHABET) {
             if (plugboard.has(p)) { continue; }
 
@@ -452,9 +470,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if(tempPlugboard !== undefined) {
                 tempPlugboard = solvePlugboardValues(tempPlugboard);
                 if(tempPlugboard !== undefined) {
-                    return tempPlugboard;
+                    possibleBoards.push(tempPlugboard);
                 }
             }
+        }
+        if (possibleBoards.length > 0) {
+            return mergePlugboards(possibleBoards);
         }
         return undefined;
     }

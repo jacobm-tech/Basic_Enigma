@@ -14,23 +14,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const midInitialSetting = document.getElementById('mid-rotor-initial');
     const slowInitialSetting = document.getElementById('slow-rotor-initial');
 
-    const ROTOR_WIRINGS = {
-        'I': 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
-        'II': 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
-        'III': 'BDFHJLCPRTXVZNYEIWGAKMUSQO',
-        'IV': 'ESOVPZJAYQUIRHXLNFTGKDCMWB',
-        'V': 'VZBRGITYUPSDNHLXAWMJQOFECK'
-    };
+    // const ROTORS = {
+    //     'I': {'WIRING':'EKMFLGDQVZNTOWYHXUSPAIBRCJ', 'NOTCH':'Q'},
+    //     'II': {'WIRING':'AJDKSIRUXBLHWTMCQGZNPYFVOE', 'NOTCH':'E'},
+    //     'III': {'WIRING':'BDFHJLCPRTXVZNYEIWGAKMUSQO', 'NOTCH':'V'},
+    //     'IV': {'WIRING':'ESOVPZJAYQUIRHXLNFTGKDCMWB', 'NOTCH':'Z'},
+    //     'V': {'WIRING':'VZBRGITYUPSDNHLXAWMJQOFECK', 'NOTCH':'J'},
+    // };
 
-    const ROTOR_NOTCHES = {
-        'I': 'Q',
-        'II': 'E',
-        'III': 'V',
-        'IV': 'J',
-        'V': 'Z'
-    };
+    const request = new XMLHttpRequest();
+    request.open("GET","/enigma_rotors.json", false);
+    request.send(null);
+    const ROTORS = JSON.parse(request.responseText);
 
-    const REFLECTOR = 'YRUHQSLDPXNGOKMIEBFZCWVJAT';
+    /**
+     * @param {{NOTCH:string, REFLECTOR:string, WIRING:string}} ROTORS
+     * * */
 
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -41,10 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const label = document.createElement('div');
         label.className = 'label';
         label.textContent = text;
-        // if (text === 'WHEEL POS') {
-        //     label.classList.add('wheel-pos-label');
-        //     label.style.gridRow = 'span 3';
-        // }
         label.style.gridColumn = String(1);
         bombeSimulator.appendChild(label);
     });
@@ -317,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get rotor settings and positions for this column
         const rotors = rotorSelects.map(select => select.value);
 
-        if (midPos === ROTOR_NOTCHES[rotors[1]]) {
+        if (midPos === ROTORS[rotors[1]].NOTCH) {
             // This is the extra step.
             midPos = caesar(midPos, 'A', 'B');
             // The slow wheel steps normally when
@@ -325,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             slowPos = caesar(slowPos, 'A', 'B');
         }
 
-        if(fastPos === ROTOR_NOTCHES[rotors[0]]) {
+        if(fastPos === ROTORS[rotors[0].NOTCH]) {
             // This is normal middle wheel rotation.
             midPos = caesar(midPos, 'A', 'B');
         }
@@ -599,18 +594,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function reflector(letter) {
-        const index = REFLECTOR.indexOf(letter);
+        const index = ROTORS.REFLECTOR.WIRING.indexOf(letter);
         return ALPHABET[index];
     }
 
     function reverse(letter, ROTOR) {
-        const index = ROTOR_WIRINGS[ROTOR].indexOf(letter);
+        const index = ROTORS[ROTOR].WIRING.indexOf(letter);
         return ALPHABET[index];
     }
 
     function forward(letter, ROTOR) {
         const index = ALPHABET.indexOf(letter);
-        return ROTOR_WIRINGS[ROTOR][index];
+        return ROTORS[ROTOR].WIRING[index];
     }
 
     function enigmaEncrypt(letter, rotors, positions) {
@@ -637,8 +632,6 @@ document.addEventListener('DOMContentLoaded', function() {
         result = reverse(result, rotors[0]);
         result = caesar(result, positions[0], 'A');
 
-        // console.log('Rotor ' + rotors[i] + ' translated ' + before + ' to ' + result);
-        // console.log('Reflector ' + 'translated ' + before + ' to ' + result);
         return result;
     }
 

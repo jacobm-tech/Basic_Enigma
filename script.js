@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const slowInitialSetting = document.getElementById('slow-rotor-initial');
 
     const request = new XMLHttpRequest();
-    request.open("GET","/enigma_rotors.json", false);
+    request.open("GET","enigma_rotors.json", false);
     request.send(null);
     const ROTORS = JSON.parse(request.responseText);
 

@@ -14,14 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const midInitialSetting = document.getElementById('mid-rotor-initial');
     const slowInitialSetting = document.getElementById('slow-rotor-initial');
 
-    // const ROTORS = {
-    //     'I': {'WIRING':'EKMFLGDQVZNTOWYHXUSPAIBRCJ', 'NOTCH':'Q'},
-    //     'II': {'WIRING':'AJDKSIRUXBLHWTMCQGZNPYFVOE', 'NOTCH':'E'},
-    //     'III': {'WIRING':'BDFHJLCPRTXVZNYEIWGAKMUSQO', 'NOTCH':'V'},
-    //     'IV': {'WIRING':'ESOVPZJAYQUIRHXLNFTGKDCMWB', 'NOTCH':'Z'},
-    //     'V': {'WIRING':'VZBRGITYUPSDNHLXAWMJQOFECK', 'NOTCH':'J'},
-    // };
-
     const request = new XMLHttpRequest();
     request.open("GET","/enigma_rotors.json", false);
     request.send(null);
@@ -363,10 +355,93 @@ document.addEventListener('DOMContentLoaded', function() {
         return mostFrequentElement;
     }
 
-    function solvePlugboardValues(plugboard) {
+    function getPlaintextCiphertext(){
         const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value);
         const ciphertext = Array.from(document.querySelectorAll('.ciphertext')).map(input => input.value);
+        for (let i = 0; i < ciphertext.length; ++i) {
+            if(!isLetter(ciphertext[i]) || !isLetter(plaintext[i])) {
+                ciphertext[i] = '';
+                plaintext[i] = '';
+            }
+        }
+        return [plaintext, ciphertext];
+    }
 
+    function mergePlugboards(plboards) {
+        const merged = new Map();
+        const allSolvedLetters = new Set(
+            plboards.flatMap(m => Array.from(m.keys()))
+            );
+        for (const letter of allSolvedLetters) {
+            const values = plboards
+              .filter(m => m.has(letter)) //only maps with this key
+              .map(m => m.get(letter));
+            const v = new Set(values);
+            if(v.size === 1 && values.length === plboards.length) {
+                merged.set(letter, values[0]);
+                merged.set(values[0], letter);
+            }
+        }
+        return merged;
+    }
+
+    function checkPlugboard(plugs, pair) {
+        if(plugs.has(pair[0]) || plugs.has(pair[1])) {
+            if(plugs.get(pair[0]) === pair[1]) {
+                return plugs;
+            }
+            return undefined;
+        }
+        plugs.set(pair[0], pair[1]);
+        plugs.set(pair[1], pair[0]);
+
+        // We will disallow plugboards with more than 6 unpaired letters
+        // or more than 20 paired letters.
+        const nUnpaired = [...plugs].filter(x => x[0] === x[1]).length;
+        if (nUnpaired > 6 || plugs.size - nUnpaired > 20) {
+            return undefined;
+        }
+        return plugs;
+    }
+
+    function reachSteadyState(plugs, plaintext, ciphertext, rotors, wheelPos) {
+        let pl = new Map(plugs);
+        let prevSize;
+        do {
+            prevSize = pl.size;
+            pl = propagatePlugboard(pl, plaintext, ciphertext, rotors, wheelPos);
+            if (pl === undefined) {
+                return undefined;
+            }
+            pl = propagatePlugboard(pl, ciphertext, plaintext, rotors, wheelPos);
+            if (pl === undefined) {
+                return undefined;
+            }
+        } while (pl.size !== prevSize);
+        return pl;
+    }
+
+    function propagatePlugboard(pl, side1, side2, rotors, wheelPos) {
+        for (let j=0; j<32; j++) {
+            const positions = [
+                wheelPos[j],
+                wheelPos[j + 32],
+                wheelPos[j + 64]
+            ];
+            if (pl.has(side1[j])) {
+                const sc = pl.get(side1[j]);
+                const sp = enigmaEncrypt(sc, rotors, positions);
+                pl = checkPlugboard(pl, [sp, side2[j]]);
+            }
+            if (pl === undefined) {
+                return undefined;
+            }
+        }
+        return pl;
+    }
+
+
+    function solvePlugboardValues(plugboard, plaintext, ciphertext, rotors, wheelPos) {
         const unsolved = (plaintext.concat(ciphertext)).filter(function (letter){
             return isLetter(letter) && !plugboard.has(letter);
         });
@@ -378,80 +453,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const map = frequencyMap(unsolved);
         const L = mostFrequent(map);
 
-        const rotorSelects = [
-            document.getElementById('fast-rotor'),
-            document.getElementById('middle-rotor'),
-            document.getElementById('slow-rotor')
-        ];
-        const wheelPosInputs = document.querySelectorAll('.wheel-pos');
-
-        function checkPlugboard(plugs, pair) {
-            if(plugs.has(pair[0]) || plugs.has(pair[1])) {
-                if(plugs.get(pair[0]) === pair[1]) {
-                    return plugs;
-                }
-                return undefined;
-            }
-            plugs.set(pair[0], pair[1]);
-            plugs.set(pair[1], pair[0]);
-            return plugs;
-        }
-
-        function reachSteadyState(plugs) {
-            let pl = new Map(plugs);
-            let prevSize;
-            do {
-                prevSize = pl.size;
-                pl = propagatePlugboard(pl, plaintext, ciphertext);
-                if (pl === undefined) {
-                    return undefined;
-                }
-                pl = propagatePlugboard(pl, ciphertext, plaintext);
-                if (pl === undefined) {
-                    return undefined;
-                }
-            } while (pl.size !== prevSize);
-            return pl;
-        }
-
-        function propagatePlugboard(pl, side1, side2) {
-            for (let j=0; j<32; j++) {
-                const positions = [
-                    wheelPosInputs[j].value,
-                    wheelPosInputs[j + 32].value,
-                    wheelPosInputs[j + 64].value
-                ];
-                if (pl.has(side1[j])) {
-                    const sc = pl.get(side1[j]);
-                    const sp = enigmaEncrypt(sc, rotors, positions);
-                    pl = checkPlugboard(pl, [sp, side2[j]]);
-                }
-                if (pl === undefined) {
-                    return undefined;
-                }
-            }
-            return pl;
-        }
-
-        function mergePlugboards(plboards) {
-            const merged = new Map();
-                        const allSolvedLetters = new Set(
-                plboards.flatMap(m => Array.from(m.keys()))
-                );
-            for (const letter of allSolvedLetters) {
-                const values = plboards
-                  .filter(m => m.has(letter)) //only maps with this key
-                  .map(m => m.get(letter));
-                const v = new Set(values);
-                if(v.size === 1 && values.length === plboards.length) {
-                    merged.set(letter, values[0]);
-                    merged.set(values[0], letter);
-                }
-            }
-            return merged;
-        }
-
-        const rotors = rotorSelects.map(select => select.value);
         const possibleBoards = new Array(0);
         for (const p of ALPHABET) {
             if (plugboard.has(p)) { continue; }
@@ -461,9 +462,9 @@ document.addEventListener('DOMContentLoaded', function() {
             tempPlugboard.set(p, L);
             tempPlugboard.set(L, p);
 
-            tempPlugboard = reachSteadyState(tempPlugboard);
+            tempPlugboard = reachSteadyState(tempPlugboard, plaintext, ciphertext, rotors, wheelPos);
             if(tempPlugboard !== undefined) {
-                tempPlugboard = solvePlugboardValues(tempPlugboard);
+                tempPlugboard = solvePlugboardValues(tempPlugboard, plaintext, ciphertext, rotors, wheelPos);
                 if(tempPlugboard !== undefined) {
                     possibleBoards.push(tempPlugboard);
                 }
@@ -484,9 +485,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function getRotorsPositions() {
+        const rotorSelects = [
+            document.getElementById('fast-rotor'),
+            document.getElementById('middle-rotor'),
+            document.getElementById('slow-rotor')
+        ];
+        const rotors = rotorSelects.map(select => select.value);
+
+        const wheelPosInputs = document.querySelectorAll('.wheel-pos');
+        const wheelPos = Array.from(wheelPosInputs).map(input => input.value);
+
+        return [rotors, wheelPos];
+    }
+
     function solvePlugboard() {
         resetPlugboard();
-        const PLUGBOARD = solvePlugboardValues(new Map());
+        const [plaintext, ciphertext] = getPlaintextCiphertext();
+        const [rotors, wheelPos] = getRotorsPositions();
+
+        const PLUGBOARD = solvePlugboardValues(new Map(), plaintext, ciphertext, rotors, wheelPos);
         if (PLUGBOARD !== undefined) {
             // Copy solution to input cells
             mapToPlugboard(PLUGBOARD);
@@ -505,7 +523,10 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i=0; i<17576; i++) {
             // await new Promise(r => setTimeout(r, 0.001));
             advanceRotors();
-            pl = solvePlugboardValues(new Map());
+            const [plaintext, ciphertext] = getPlaintextCiphertext();
+            const [rotors, wheelPos] = getRotorsPositions();
+
+            pl = solvePlugboardValues(new Map(), plaintext, ciphertext, rotors, wheelPos);
             if (pl !== undefined) {
                 mapToPlugboard(pl);
                 setPlugboardStatus("STOP FOUND", 'green');
@@ -517,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listener for ADVANCE ROTORS button
     advanceRotorsButton.addEventListener('click', advanceRotors);
-        // Add event listener for ADVANCE ROTORS button
+    // Add event listener for ADVANCE ROTORS button
     solvePlugboardButton.addEventListener('click', solvePlugboard);
     runBombeButton.addEventListener('click', runBombe);
 

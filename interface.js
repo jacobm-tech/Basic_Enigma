@@ -354,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function runBombe() {
         resetPlugboard();
+        await new Promise(r => setTimeout(r, 0.001));
         let pl;
         for (let i=0; i<17576; i++) {
             // await new Promise(r => setTimeout(r, 0.001));

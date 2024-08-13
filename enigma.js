@@ -78,7 +78,7 @@ function stepRotors(fastPos, midPos, slowPos) {
         slowPos = caesar(slowPos, 'A', 'B');
     }
 
-    if(fastPos === ROTORS[rotors[0].NOTCH]) {
+    if(fastPos === ROTORS[rotors[0]].NOTCH) {
         // This is normal middle wheel rotation.
         midPos = caesar(midPos, 'A', 'B');
     }

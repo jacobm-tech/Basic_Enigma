@@ -14,17 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const midInitialSetting = document.getElementById('mid-rotor-initial');
     const slowInitialSetting = document.getElementById('slow-rotor-initial');
 
-    const request = new XMLHttpRequest();
-    request.open("GET","enigma_rotors.json", false);
-    request.send(null);
-    const ROTORS = JSON.parse(request.responseText);
-
     /**
      * @param {{NOTCH:string, REFLECTOR:string, WIRING:string}} ROTORS
      * * */
-
-    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
 
     // Add labels
     const labels = ['PLAINTEXT', '', 'STECKERED', '', 'FAST', 'MIDDLE', 'SLOW', 'STECKERED', '', 'CIPHERTEXT'];
@@ -294,35 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateWheelPositions();
     });
 
-    function stepRotors(fastPos, midPos, slowPos) {
-        const rotorSelects = [
-          document.getElementById('fast-rotor'),
-          document.getElementById('middle-rotor'),
-          document.getElementById('slow-rotor')
-        ];
-
-        // Get rotor settings and positions for this column
-        const rotors = rotorSelects.map(select => select.value);
-
-        if (midPos === ROTORS[rotors[1]].NOTCH) {
-            // This is the extra step.
-            midPos = caesar(midPos, 'A', 'B');
-            // The slow wheel steps normally when
-                // the middle wheel reaches its notch.
-            slowPos = caesar(slowPos, 'A', 'B');
-        }
-
-        if(fastPos === ROTORS[rotors[0].NOTCH]) {
-            // This is normal middle wheel rotation.
-            midPos = caesar(midPos, 'A', 'B');
-        }
-
-        // Fast rotor always steps.
-        fastPos = caesar(fastPos, 'A', 'B');
-
-        return [fastPos, midPos, slowPos];
-    }
-
     // Function to advance rotors
     function advanceRotors() {
         fastInitialSetting.value = caesar(fastInitialSetting.value, 'A', 'B');
@@ -336,25 +299,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateWheelPositions();
     }
 
-    function  frequencyMap (arr) {
-        return arr.reduce((acc, curr) => {
-            acc[curr] = (acc[curr] || 0) + 1;
-            return acc;
-        }, {});
-    }
-
-    function  mostFrequent(frequencyMap) {
-        let maxCount = 0;
-        let mostFrequentElement;
-        for (const [element, count] of Object.entries(frequencyMap)) {
-            if (count > maxCount) {
-                maxCount = count;
-                mostFrequentElement = element;
-            }
-        }
-        return mostFrequentElement;
-    }
-
     function getPlaintextCiphertext(){
         const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value);
         const ciphertext = Array.from(document.querySelectorAll('.ciphertext')).map(input => input.value);
@@ -365,115 +309,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         return [plaintext, ciphertext];
-    }
-
-    function mergePlugboards(plboards) {
-        const merged = new Map();
-        const allSolvedLetters = new Set(
-            plboards.flatMap(m => Array.from(m.keys()))
-            );
-        for (const letter of allSolvedLetters) {
-            const values = plboards
-              .filter(m => m.has(letter)) //only maps with this key
-              .map(m => m.get(letter));
-            const v = new Set(values);
-            if(v.size === 1 && values.length === plboards.length) {
-                merged.set(letter, values[0]);
-                merged.set(values[0], letter);
-            }
-        }
-        return merged;
-    }
-
-    function checkPlugboard(plugs, pair) {
-        if(plugs.has(pair[0]) || plugs.has(pair[1])) {
-            if(plugs.get(pair[0]) === pair[1]) {
-                return plugs;
-            }
-            return undefined;
-        }
-        plugs.set(pair[0], pair[1]);
-        plugs.set(pair[1], pair[0]);
-
-        // We will disallow plugboards with more than 6 unpaired letters
-        // or more than 20 paired letters.
-        const nUnpaired = [...plugs].filter(x => x[0] === x[1]).length;
-        if (nUnpaired > 6 || plugs.size - nUnpaired > 20) {
-            return undefined;
-        }
-        return plugs;
-    }
-
-    function reachSteadyState(plugs, plaintext, ciphertext, rotors, wheelPos) {
-        let pl = new Map(plugs);
-        let prevSize;
-        do {
-            prevSize = pl.size;
-            pl = propagatePlugboard(pl, plaintext, ciphertext, rotors, wheelPos);
-            if (pl === undefined) {
-                return undefined;
-            }
-            pl = propagatePlugboard(pl, ciphertext, plaintext, rotors, wheelPos);
-            if (pl === undefined) {
-                return undefined;
-            }
-        } while (pl.size !== prevSize);
-        return pl;
-    }
-
-    function propagatePlugboard(pl, side1, side2, rotors, wheelPos) {
-        for (let j=0; j<32; j++) {
-            const positions = [
-                wheelPos[j],
-                wheelPos[j + 32],
-                wheelPos[j + 64]
-            ];
-            if (pl.has(side1[j])) {
-                const sc = pl.get(side1[j]);
-                const sp = enigmaEncrypt(sc, rotors, positions);
-                pl = checkPlugboard(pl, [sp, side2[j]]);
-            }
-            if (pl === undefined) {
-                return undefined;
-            }
-        }
-        return pl;
-    }
-
-
-    function solvePlugboardValues(plugboard, plaintext, ciphertext, rotors, wheelPos) {
-        const unsolved = (plaintext.concat(ciphertext)).filter(function (letter){
-            return isLetter(letter) && !plugboard.has(letter);
-        });
-
-        if (unsolved.length === 0) {
-            return plugboard;
-        }
-
-        const map = frequencyMap(unsolved);
-        const L = mostFrequent(map);
-
-        const possibleBoards = new Array(0);
-        for (const p of ALPHABET) {
-            if (plugboard.has(p)) { continue; }
-
-            // pair L with p and reach steady state
-            let tempPlugboard = new Map(plugboard);
-            tempPlugboard.set(p, L);
-            tempPlugboard.set(L, p);
-
-            tempPlugboard = reachSteadyState(tempPlugboard, plaintext, ciphertext, rotors, wheelPos);
-            if(tempPlugboard !== undefined) {
-                tempPlugboard = solvePlugboardValues(tempPlugboard, plaintext, ciphertext, rotors, wheelPos);
-                if(tempPlugboard !== undefined) {
-                    possibleBoards.push(tempPlugboard);
-                }
-            }
-        }
-        if (possibleBoards.length > 0) {
-            return mergePlugboards(possibleBoards);
-        }
-        return undefined;
     }
 
     function mapToPlugboard(plugboard) {
@@ -600,62 +435,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call updateRotorPositions initially to set the default values
     updateWheelPositions();
 
-    function caesar(letter, from, to) {
-        const n = ALPHABET.length;
-        const fromIndex = ALPHABET.indexOf(from.toUpperCase());
-        const toIndex = ALPHABET.indexOf(to.toUpperCase());
-
-        if (fromIndex === -1 || toIndex === -1) {
-            throw new Error("Both FROM and TO letters must be in the alphabet");
-        }
-
-        const offset = (toIndex - fromIndex + n) % n;
-        const shiftedAlphabet = ALPHABET.slice(offset) + ALPHABET.slice(0, offset);
-        return shiftedAlphabet[ALPHABET.indexOf(letter)];
-    }
-
-    function reflector(letter) {
-        const index = ROTORS.REFLECTOR.WIRING.indexOf(letter);
-        return ALPHABET[index];
-    }
-
-    function reverse(letter, ROTOR) {
-        const index = ROTORS[ROTOR].WIRING.indexOf(letter);
-        return ALPHABET[index];
-    }
-
-    function forward(letter, ROTOR) {
-        const index = ALPHABET.indexOf(letter);
-        return ROTORS[ROTOR].WIRING[index];
-    }
-
-    function enigmaEncrypt(letter, rotors, positions) {
-        // Implement the full Enigma encryption process here
-        positions = stepRotors(positions[0], positions[1], positions[2]);
-        let result;
-
-        // Forward through rotors
-        result = caesar(letter, 'A', positions[0]);
-        result = forward(result, rotors[0]);
-        result = caesar(result, positions[0], positions[1]);
-        result = forward(result, rotors[1]);
-        result = caesar(result, positions[1], positions[2]);
-        result = forward(result, rotors[2]);
-        result = caesar(result, positions[2], 'A');
-
-        result = reflector(result);
-
-        result = caesar(result, 'A', positions[2]);
-        result = reverse(result, rotors[2]);
-        result = caesar(result, positions[2], positions[1]);
-        result = reverse(result, rotors[1]);
-        result = caesar(result, positions[1], positions[0]);
-        result = reverse(result, rotors[0]);
-        result = caesar(result, positions[0], 'A');
-
-        return result;
-    }
-
     function handleSteckeredInput(input, letter) {
         if (letter.length === 1 && letter.match(/[A-Z]/i)) {
             const index = Array.from(steckeredInputs).indexOf(input);
@@ -724,10 +503,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearPlugboardStatus() {
         plugboardStatus.textContent = '';
         plugboardStatus.style.color = '';
-    }
-
-    function isLetter(c) {
-        return c.toLowerCase() !== c.toUpperCase();
     }
 
     function resetPlugboard() {

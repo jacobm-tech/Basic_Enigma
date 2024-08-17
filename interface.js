@@ -354,39 +354,38 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
     }
 
-    function getInitialPosition() {
-        const fastSetting = fastInitialSetting.value.charCodeAt(0) - 65;
-        const midSetting = midInitialSetting.value.charCodeAt(0) - 65;
-        const slowSetting = slowInitialSetting.value.charCodeAt(0) - 65;
-        return (slowSetting * 26 * 25 + midSetting * 26 + fastSetting) / (26 * 25 * 26);
-    }
-
     async function runBombe() {
+        const totalIterations = 16900;
+        let init = ['A','A','A'];
+        const posMap = new Map();
+        for (let i = 0; i < totalIterations; i++) {
+            posMap.set(init.join(""), i);
+            init = stepRotors(init[0], init[1], init[2]);
+        }
+
         async function update() {
             await new Promise(r => setTimeout(r, 0));
         }
         resetPlugboard();
-        const startPosition = getInitialPosition();
+        const startPosition = posMap.get([fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value].join(""))/totalIterations;
         await update();
         let pl;
-        const totalIterations = 16900;
         const stops = [];
         let hasWrapped = false;
 
         for (let i = 0; i < totalIterations; i++) {
-            const currentPosition = (startPosition + i / totalIterations) % 1;
-
-            if (!hasWrapped && currentPosition < startPosition) {
-                hasWrapped = true;
-            }
-
-            updateTimelineProgress(startPosition, currentPosition, hasWrapped);
-
             advanceRotors();
             const [plaintext, ciphertext] = getPlaintextCiphertext();
             const [rotors, wheelPos] = getRotorsPositions();
 
             pl = solvePlugboardValues(new Map(), plaintext, ciphertext, rotors, wheelPos);
+
+            const currentPosition = posMap.get([fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value].join(""))/totalIterations;
+            if (!hasWrapped && currentPosition < startPosition) {
+                hasWrapped = true;
+            }
+            updateTimelineProgress(startPosition, currentPosition, hasWrapped);
+
             if (pl !== undefined) {
                 stops.push(i);
                 addStopToTimeline(currentPosition * 100);
@@ -412,7 +411,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateTimelineProgress(startPosition, currentPosition, hasWrapped) {
-        console.log('updating timeline');
         const startPercentage = startPosition * 100;
         const currentPercentage = currentPosition * 100;
 

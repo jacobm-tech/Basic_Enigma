@@ -61,7 +61,7 @@ body, html {
 
 .timeline-stop {
     position: absolute;
-    width: 2px;
+    width: 3px;
     height: 100%;
     background-color: #000;
     top: 0;

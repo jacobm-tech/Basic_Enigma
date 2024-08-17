@@ -278,12 +278,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     fastRotorSelect.addEventListener('change', function () {
+        clearTimeline();
         updateWheelPositions();
     });
     middleRotorSelect.addEventListener('change', function () {
+        clearTimeline();
         updateWheelPositions();
     });
     slowRotorSelect.addEventListener('change', function () {
+        clearTimeline();
         updateWheelPositions();
     });
 
@@ -352,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const fastSetting = fastInitialSetting.value.charCodeAt(0) - 65;
         const midSetting = midInitialSetting.value.charCodeAt(0) - 65;
         const slowSetting = slowInitialSetting.value.charCodeAt(0) - 65;
-        return (slowSetting * 26 * 26 + midSetting * 26 + fastSetting) / (26 * 26 * 26);
+        return (slowSetting * 26 * 25 + midSetting * 26 + fastSetting) / (26 * 25 * 26);
     }
 
     async function runBombe() {
@@ -360,11 +363,10 @@ document.addEventListener('DOMContentLoaded', function() {
             await new Promise(r => setTimeout(r, 0));
         }
         resetPlugboard();
-        clearTimeline();
         const startPosition = getInitialPosition();
         await update();
         let pl;
-        const totalIterations = 17576;
+        const totalIterations = 16900;
         const stops = [];
         let hasWrapped = false;
 
@@ -395,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (stops.length > 0) {
-            setPlugboardStatus(`${stops.length} STOP(S) FOUND`, 'green');
+            setPlugboardStatus("STOP FOUND", 'green');
         } else {
             setPlugboardStatus("NO STOP FOUND", 'red');
         }
@@ -406,6 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateTimelineProgress(startPosition, currentPosition, hasWrapped) {
+        console.log('updating timeline');
         const startPercentage = startPosition * 100;
         const currentPercentage = currentPosition * 100;
 

@@ -2,6 +2,7 @@
 /*.lprof
 /profile_output*.txt
 /.venv/
+/.vscode
 /.idea
 /eslint.config.js
 /.jshintrc

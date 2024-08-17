@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const runBombeButton = document.getElementById('run-bombe');
 
     const plugboardStatus = document.getElementById('plugboard-status');
+    const timelineContainer = document.querySelector('.timeline-container');
 
     const fastInitialSetting = document.getElementById('fast-rotor-initial');
     const midInitialSetting = document.getElementById('mid-rotor-initial');
@@ -288,13 +289,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to advance rotors
     function advanceRotors() {
-        fastInitialSetting.value = caesar(fastInitialSetting.value, 'A', 'B');
-        if(fastInitialSetting.value === 'A') {
-            midInitialSetting.value = caesar(midInitialSetting.value, 'A', 'B');
-            if(midInitialSetting.value === 'A') {
-                slowInitialSetting.value = caesar(slowInitialSetting.value, 'A', 'B');
-            }
-        }
+        [fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value] =
+          stepRotors(fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value);
         saveState();
         updateWheelPositions();
     }
@@ -352,26 +348,95 @@ document.addEventListener('DOMContentLoaded', function() {
         return false;
     }
 
+    function getInitialPosition() {
+        const fastSetting = fastInitialSetting.value.charCodeAt(0) - 65;
+        const midSetting = midInitialSetting.value.charCodeAt(0) - 65;
+        const slowSetting = slowInitialSetting.value.charCodeAt(0) - 65;
+        return (slowSetting * 26 * 26 + midSetting * 26 + fastSetting) / (26 * 26 * 26);
+    }
+
     async function runBombe() {
+        async function update() {
+            await new Promise(r => setTimeout(r, 0));
+        }
         resetPlugboard();
-        await new Promise(r => setTimeout(r, 0.001));
+        clearTimeline();
+        const startPosition = getInitialPosition();
+        await update();
         let pl;
-        for (let i=0; i<17576; i++) {
-            // await new Promise(r => setTimeout(r, 0.001));
+        const totalIterations = 17576;
+        const stops = [];
+        let hasWrapped = false;
+
+        for (let i = 0; i < totalIterations; i++) {
+            const currentPosition = (startPosition + i / totalIterations) % 1;
+
+            if (!hasWrapped && currentPosition < startPosition) {
+                hasWrapped = true;
+            }
+
+            updateTimelineProgress(startPosition, currentPosition, hasWrapped);
+
             advanceRotors();
             const [plaintext, ciphertext] = getPlaintextCiphertext();
             const [rotors, wheelPos] = getRotorsPositions();
 
             pl = solvePlugboardValues(new Map(), plaintext, ciphertext, rotors, wheelPos);
             if (pl !== undefined) {
-                mapToPlugboard(pl);
-                setPlugboardStatus("STOP FOUND", 'green');
-                return;
+                stops.push(i);
+                addStopToTimeline(currentPosition * 100);
+                break;
+            }
+
+            // Allow UI to update
+            if (i % 100 === 0) {
+                await update();
             }
         }
-        setPlugboardStatus("NO STOP FOUND", 'red');
+
+        if (stops.length > 0) {
+            setPlugboardStatus(`${stops.length} STOP(S) FOUND`, 'green');
+        } else {
+            setPlugboardStatus("NO STOP FOUND", 'red');
+        }
     }
 
+    function clearTimeline() {
+        timelineContainer.innerHTML = '';
+    }
+
+    function updateTimelineProgress(startPosition, currentPosition, hasWrapped) {
+        const startPercentage = startPosition * 100;
+        const currentPercentage = currentPosition * 100;
+
+        // Remove any existing progress sections
+        const existingProgress = timelineContainer.querySelectorAll('.timeline-progress');
+        existingProgress.forEach(el => el.remove());
+
+        if (!hasWrapped) {
+            // Single progress section from start to current position
+            addProgressSection(startPercentage, currentPercentage - startPercentage);
+        } else {
+            // Two progress sections: from start to end, and from beginning to current position
+            addProgressSection(startPercentage, 100 - startPercentage);
+            addProgressSection(0, currentPercentage);
+        }
+    }
+
+    function addProgressSection(start, width) {
+        const progress = document.createElement('div');
+        progress.className = 'timeline-progress';
+        progress.style.left = `${start}%`;
+        progress.style.width = `${width}%`;
+        timelineContainer.appendChild(progress);
+    }
+
+    function addStopToTimeline(percentage) {
+        const stop = document.createElement('div');
+        stop.className = 'timeline-stop';
+        stop.style.left = `${percentage}%`;
+        timelineContainer.appendChild(stop);
+    }
     // Add event listener for ADVANCE ROTORS button
     advanceRotorsButton.addEventListener('click', advanceRotors);
     // Add event listener for ADVANCE ROTORS button

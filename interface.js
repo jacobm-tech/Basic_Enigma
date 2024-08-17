@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         input.addEventListener('keydown', function (e) {
             if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+                clearTimeline();
                 e.preventDefault();
                 this.value = e.key.toUpperCase();
                 if (index < allInputs.length - 1) {
@@ -117,6 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     allInputs[index - 1].focus();
                 }
                 updateAdjacentButtons(this);
+            } else if (e.key === 'Backspace' && this.value !== '') {
+                clearTimeline();
             }
         });
 
@@ -387,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (pl !== undefined) {
                 stops.push(i);
                 addStopToTimeline(currentPosition * 100);
+                mapToPlugboard(pl);
                 break;
             }
 

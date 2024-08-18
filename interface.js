@@ -379,8 +379,19 @@ document.addEventListener('DOMContentLoaded', function() {
         async function update() {
             await new Promise(r => setTimeout(r, 0));
         }
+
+        function getAbsolutePosition(){
+            let pos = posMap.get([fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value].join(""))/totalIterations;
+            if (!pos) {
+                advanceRotors();
+                pos = posMap.get([fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value].join(""))/totalIterations;
+            }
+            return pos;
+        }
+
         resetPlugboard();
-        const startPosition = posMap.get([fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value].join(""))/totalIterations;
+        const startPosition = getAbsolutePosition();
+
         await update();
         let pl;
         const stops = [];
@@ -393,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             pl = solvePlugboardValues(new Map(), plaintext, ciphertext, rotors, wheelPos);
 
-            const currentPosition = posMap.get([fastInitialSetting.value, midInitialSetting.value, slowInitialSetting.value].join(""))/totalIterations;
+            const currentPosition = getAbsolutePosition();
             if (!hasWrapped && currentPosition < startPosition) {
                 hasWrapped = true;
             }

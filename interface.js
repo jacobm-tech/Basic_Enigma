@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const runBombeButton = document.getElementById('run-bombe');
 
     const plugboardStatus = document.getElementById('plugboard-status');
+    const resetPlugboardButton = document.getElementById('reset-plugboard');
+
     const timelineContainer = document.querySelector('.timeline-container');
 
     const fastInitialSetting = document.getElementById('fast-rotor-initial');
@@ -282,14 +284,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     fastRotorSelect.addEventListener('change', function () {
         clearTimeline();
+        resetPlugboard();
         updateWheelPositions();
     });
     middleRotorSelect.addEventListener('change', function () {
         clearTimeline();
+        resetPlugboard();
         updateWheelPositions();
     });
     slowRotorSelect.addEventListener('change', function () {
         clearTimeline();
+        resetPlugboard();
         updateWheelPositions();
     });
 
@@ -362,6 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function runBombe() {
+        disableButtons();
         const totalIterations = 16900;
         let init = ['A','A','A'];
         const posMap = new Map();
@@ -411,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             setPlugboardStatus("NO STOP FOUND", 'red');
         }
+        enableButtons();
     }
 
     function clearTimeline() {
@@ -455,6 +462,19 @@ document.addEventListener('DOMContentLoaded', function() {
     solvePlugboardButton.addEventListener('click', solvePlugboard);
     runBombeButton.addEventListener('click', runBombe);
 
+    function disableButtons() {
+        advanceRotorsButton.disabled = true;
+        solvePlugboardButton.disabled = true;
+        runBombeButton.disabled = true;
+        resetPlugboardButton.disabled = true;
+    }
+
+    function enableButtons(){
+        advanceRotorsButton.disabled = false;
+        solvePlugboardButton.disabled = false;
+        runBombeButton.disabled = false;
+        resetPlugboardButton.disabled = false;
+    }
 
     function saveState() {
         const plaintext = Array.from(document.querySelectorAll('.plaintext')).map(input => input.value).join(',');
@@ -570,8 +590,6 @@ document.addEventListener('DOMContentLoaded', function() {
             subtree: true
         });
     });
-
-    const resetPlugboardButton = document.getElementById('reset-plugboard');
 
     function setPlugboardStatus(message, color) {
         plugboardStatus.textContent = message;

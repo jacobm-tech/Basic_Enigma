@@ -6,3 +6,5 @@
 /.idea
 /eslint.config.js
 /.jshintrc
+/node_modules/
+/dist/

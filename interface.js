@@ -320,6 +320,13 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const entry of plugboard) {
             updatePlugboard(entry[0], entry[1]);
         }
+        const plaintextInputs = Array.from(document.querySelectorAll('.plaintext'));
+        const ciphertextInputs = Array.from(document.querySelectorAll('.ciphertext'));
+        const steckeredInputs = Array.from(document.querySelectorAll('.steckered'));
+
+        plaintextInputs.map((input, idx) => steckeredInputs[idx].value = plugboard.get(input.value)||'');
+        ciphertextInputs.map((input, idx) => steckeredInputs[idx+32].value = plugboard.get(input.value)||'');
+
     }
 
     function getRotorsPositions() {

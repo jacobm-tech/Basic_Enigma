@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const slowRotorSelect = document.getElementById('slow-rotor');
     const advanceRotorsButton = document.getElementById('advance-rotors');
     const solvePlugboardButton = document.getElementById('solve-plugboard');
+    solvePlugboardButton.disabled = true;
     const runBombeButton = document.getElementById('run-bombe');
+    runBombeButton.disabled = true;
 
     const plugboardStatus = document.getElementById('plugboard-status');
     const resetPlugboardButton = document.getElementById('reset-plugboard');
